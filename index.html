@@ -1,0 +1,4171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recurrent Neural Networks — Deep Learning Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050a0f;
+  --bg2: #080f18;
+  --bg3: #0d1a26;
+  --panel: #0a1520;
+  --border: #1a3050;
+  --border2: #0f2035;
+  --cyan: #00e5ff;
+  --cyan2: #00b4d8;
+  --green: #00ff9d;
+  --amber: #ffb800;
+  --pink: #ff4daa;
+  --purple: #b06cff;
+  --text: #c8dff0;
+  --text2: #7a9ab5;
+  --text3: #4a6a80;
+  --glow: rgba(0,229,255,0.15);
+  --glow2: rgba(0,255,157,0.12);
+  --code-bg: #020d17;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--cyan2); border-radius: 2px; }
+
+/* GRID BACKGROUND */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(5,10,15,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border2);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+}
+
+.nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0;
+  list-style: none;
+}
+
+.nav-links a {
+  display: block;
+  padding: 0.35rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text2);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+  border-right: 1px solid var(--border2);
+}
+.nav-links li:first-child a { border-left: 1px solid var(--border2); }
+.nav-links a:hover { color: var(--cyan); }
+
+/* PROGRESS BAR */
+#progress-bar {
+  position: fixed;
+  top: 58px;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  width: 0%;
+  z-index: 99;
+  transition: width 0.1s;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 120px 2rem 4rem;
+  overflow: hidden;
+}
+
+.hero-circuit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--cyan);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.8s 0.15s ease both;
+}
+
+.hero h1 .line1 { display: block; color: #fff; }
+.hero h1 .line2 {
+  display: block;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 60%, var(--amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-desc {
+  max-width: 620px;
+  color: var(--text2);
+  font-size: 1.05rem;
+  margin-bottom: 3rem;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.8s 0.45s ease both;
+}
+
+.tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  background: var(--panel);
+}
+
+.tag.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.05); }
+
+/* CONTENT WRAPPER */
+.content {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+/* SECTION */
+.section {
+  margin-bottom: 5rem;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.section.visible { opacity: 1; transform: translateY(0); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border2);
+}
+
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.9rem;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+/* PANEL */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+
+.panel-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--cyan);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.panel-title .icon { font-size: 1rem; }
+
+p { margin-bottom: 1rem; color: var(--text); }
+p:last-child { margin-bottom: 0; }
+
+strong { color: #fff; font-weight: 500; }
+
+/* HIGHLIGHT BOXES */
+.highlight {
+  background: rgba(0,229,255,0.04);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-left: 3px solid var(--cyan);
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  font-size: 0.95rem;
+}
+
+.highlight.green {
+  background: rgba(0,255,157,0.04);
+  border-color: rgba(0,255,157,0.15);
+  border-left-color: var(--green);
+}
+
+.highlight.amber {
+  background: rgba(255,184,0,0.04);
+  border-color: rgba(255,184,0,0.15);
+  border-left-color: var(--amber);
+}
+
+.highlight.pink {
+  background: rgba(255,77,170,0.04);
+  border-color: rgba(255,77,170,0.15);
+  border-left-color: var(--pink);
+}
+
+/* CODE BLOCKS */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 0;
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: rgba(0,229,255,0.04);
+  border-bottom: 1px solid var(--border2);
+}
+
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.code-dots { display: flex; gap: 0.4rem; }
+.code-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.code-dots span:nth-child(1) { background: #ff5f57; }
+.code-dots span:nth-child(2) { background: #ffbd2e; }
+.code-dots span:nth-child(3) { background: #28c840; }
+
+pre {
+  padding: 1.5rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.8;
+  color: #a8d8f0;
+}
+
+.kw { color: #ff79c6; font-weight: 600; }
+.fn { color: #50fa7b; }
+.st { color: #f1fa8c; }
+.cm { color: #6272a4; font-style: italic; }
+.nm { color: #bd93f9; }
+.op { color: #ff79c6; }
+.cl { color: #8be9fd; }
+.im { color: #ffb86c; }
+
+/* MATH FORMULA */
+.formula {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--purple);
+  padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  color: #e0d0ff;
+  overflow-x: auto;
+}
+
+.formula-label {
+  font-size: 0.65rem;
+  color: var(--purple);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* ARCHITECTURE DIAGRAM */
+.arch-diagram {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+/* GRID LAYOUTS */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media(max-width: 768px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+}
+
+/* COMPARISON TABLE */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.88rem;
+}
+
+.comparison-table th {
+  background: rgba(0,229,255,0.08);
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border2);
+  color: var(--text);
+  vertical-align: top;
+}
+
+.comparison-table tr:hover td { background: rgba(0,229,255,0.02); }
+
+.badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.badge-green { background: rgba(0,255,157,0.15); color: var(--green); }
+.badge-red { background: rgba(255,77,77,0.15); color: #ff6b6b; }
+.badge-amber { background: rgba(255,184,0,0.15); color: var(--amber); }
+
+/* ===================== ANIMATIONS ===================== */
+
+/* RNN UNROLL ANIMATION */
+.rnn-unroll {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding: 2rem 1rem;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.rnn-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rnn-box {
+  width: 72px;
+  height: 72px;
+  background: var(--panel);
+  border: 2px solid var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--cyan);
+  position: relative;
+  animation: pulseBox 3s infinite;
+}
+
+.rnn-box.active {
+  background: rgba(0,229,255,0.1);
+  box-shadow: 0 0 20px rgba(0,229,255,0.3);
+  animation: activePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes activePulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.2); }
+  50% { box-shadow: 0 0 40px rgba(0,229,255,0.5); }
+}
+
+@keyframes pulseBox {
+  0%, 100% { border-color: rgba(0,229,255,0.6); }
+  50% { border-color: var(--cyan); }
+}
+
+.rnn-label {
+  margin-top: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text2);
+  text-align: center;
+}
+
+.rnn-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+.arrow-line {
+  height: 2px;
+  width: 32px;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  position: relative;
+}
+
+.arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--green);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+.rnn-input {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--amber);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.rnn-output {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--green);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* NUMERICAL STEP DEMO */
+.num-demo {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.num-demo-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--amber);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.step-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border2);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.step-row.show { opacity: 1; transform: translateX(0); }
+
+.step-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--cyan);
+  background: rgba(0,229,255,0.1);
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.step-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.step-content .val { color: var(--amber); font-weight: 600; }
+.step-content .eq { color: var(--green); }
+.step-content .op { color: var(--pink); }
+
+.demo-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--cyan);
+  background: transparent;
+  color: var(--cyan);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.btn:hover { background: rgba(0,229,255,0.1); }
+.btn.primary { background: var(--cyan); color: var(--bg); font-weight: 600; }
+.btn.primary:hover { background: var(--cyan2); }
+.btn.green { border-color: var(--green); color: var(--green); }
+.btn.green:hover { background: rgba(0,255,157,0.1); }
+
+/* LSTM GATE ANIMATION */
+.lstm-diagram {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+/* STOCK CHART */
+.chart-container {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.chart-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--amber);
+  margin-bottom: 1rem;
+  letter-spacing: 0.08em;
+}
+
+/* INTERACTIVE QUIZ */
+.quiz-card {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.quiz-q {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quiz-opt {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: all 0.2s;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.quiz-opt:hover { border-color: var(--cyan); color: #fff; }
+.quiz-opt.correct { border-color: var(--green); background: rgba(0,255,157,0.1); color: var(--green); }
+.quiz-opt.wrong { border-color: #ff6b6b; background: rgba(255,107,107,0.1); color: #ff6b6b; }
+
+.quiz-feedback {
+  margin-top: 0.75rem;
+  font-size: 0.88rem;
+  display: none;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--green);
+  color: var(--text);
+}
+
+/* SCROLLING SEQUENCE DEMO */
+.seq-demo {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.seq-track {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.seq-token {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all 0.3s;
+  position: relative;
+}
+
+.seq-token.current {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0,229,255,0.1);
+  box-shadow: 0 0 12px rgba(0,229,255,0.2);
+}
+
+.seq-token.processed {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(0,255,157,0.05);
+}
+
+/* MEMORY CELL VISUAL */
+.memory-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.memory-bar {
+  height: 20px;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.memory-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text2);
+  min-width: 80px;
+}
+
+.memory-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--amber);
+}
+
+/* TOOLTIPS */
+.tooltip-wrap { position: relative; display: inline; }
+.tooltip-wrap .tip-text {
+  display: none;
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.78rem;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  z-index: 50;
+  font-family: 'DM Sans', sans-serif;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.tooltip-wrap:hover .tip-text { display: block; }
+.underline-cyan { border-bottom: 1px dashed var(--cyan); cursor: help; }
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+  border-left: 2px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.timeline-item {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -2.5rem;
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  background: var(--cyan);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+}
+
+.timeline-year {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-content {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dataFlow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.data-flow-line {
+  position: relative;
+  height: 2px;
+  background: var(--border2);
+  margin: 0.5rem 0;
+  overflow: hidden;
+}
+
+.data-flow-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: dataFlow 2s linear infinite;
+}
+
+/* GATE INDICATORS */
+.gate-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid;
+  margin: 0.2rem;
+}
+
+.gate-forget { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,0.08); }
+.gate-input  { border-color: var(--amber); color: var(--amber); background: rgba(255,184,0,0.08); }
+.gate-output { border-color: var(--green); color: var(--green); background: rgba(0,255,157,0.08); }
+.gate-cell   { border-color: var(--purple); color: var(--purple); background: rgba(176,108,255,0.08); }
+
+/* CALLOUT */
+.callout {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,184,0,0.05);
+  border: 1px solid rgba(255,184,0,0.2);
+  margin: 1.25rem 0;
+  align-items: flex-start;
+}
+
+.callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+.callout-text { font-size: 0.9rem; color: var(--text); }
+
+/* CANDLESTICK */
+.candle-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  padding: 1rem;
+  background: var(--code-bg);
+}
+
+.candle-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+}
+
+.candle-wick {
+  width: 1px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.candle-body {
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.candle-bull { background: #00ff9d; }
+.candle-bear { background: #ff4d4d; }
+
+/* FLOATING PARTICLES */
+.particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--cyan);
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatParticle linear infinite;
+}
+
+@keyframes floatParticle {
+  0% { opacity: 0; transform: translateY(100vh) scale(0); }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.2; }
+  100% { opacity: 0; transform: translateY(-10vh) scale(1.5); }
+}
+
+/* SVG DIAGRAMS */
+svg text { font-family: 'JetBrains Mono', monospace; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-btn:hover:not(.active) { color: var(--text); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* COPY BUTTON */
+.copy-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+/* STOCK PREDICTOR */
+#stock-demo {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.stock-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.signal-box {
+  padding: 1.25rem;
+  border: 1px solid;
+  text-align: center;
+}
+
+.signal-buy { border-color: var(--green); background: rgba(0,255,157,0.05); }
+.signal-sell { border-color: #ff6b6b; background: rgba(255,107,107,0.05); }
+.signal-hold { border-color: var(--amber); background: rgba(255,184,0,0.05); }
+
+.signal-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.signal-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+}
+
+.confidence-bar-wrap {
+  margin-top: 1.5rem;
+}
+
+.confidence-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text2);
+  margin-bottom: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.confidence-bar {
+  height: 6px;
+  background: var(--border2);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  transition: width 0.8s ease;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* SECTION DIVIDER */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 3rem 0;
+  opacity: 0.4;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider-icon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+}
+
+/* Inline code */
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8em;
+  background: rgba(0,229,255,0.06);
+  border: 1px solid rgba(0,229,255,0.12);
+  padding: 0.1em 0.35em;
+  color: var(--cyan);
+}
+
+/* LIST STYLES */
+ul.styled-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+}
+
+ul.styled-list li {
+  padding: 0.3rem 0;
+  padding-left: 1.25rem;
+  position: relative;
+  font-size: 0.93rem;
+  color: var(--text);
+}
+
+ul.styled-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--cyan);
+  font-size: 0.7rem;
+  top: 0.45rem;
+}
+
+/* SCROLLSPY ACTIVE */
+.nav-links a.active { color: var(--cyan); }
+
+/* HERO CANVAS */
+#hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* SUMMARY CARD */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border2);
+  border: 1px solid var(--border2);
+  margin: 2rem 0;
+}
+
+.summary-cell {
+  background: var(--panel);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.summary-stat {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--cyan);
+  display: block;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.summary-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .stock-display { grid-template-columns: 1fr; }
+  .rnn-box { width: 56px; height: 56px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">⟨ RNN / LSTM / GRU ⟩</div>
+  <ul class="nav-links">
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#rnn">RNN</a></li>
+    <li><a href="#lstm">LSTM</a></li>
+    <li><a href="#gru">GRU</a></li>
+    <li><a href="#timeseries">Time Series</a></li>
+    <li><a href="#stock">Stock Project</a></li>
+    <li><a href="#code">Code Lab</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-eyebrow">Module 04 — Deep Learning Series</div>
+  <h1>
+    <span class="line1">Recurrent Neural</span>
+    <span class="line2">Networks</span>
+  </h1>
+  <p class="hero-desc">
+    From memory cells to stock market prediction — a complete visual guide to sequence modeling, Long Short-Term Memory networks, Gated Recurrent Units, and time series forecasting.
+  </p>
+  <div class="hero-tags">
+    <span class="tag active">Sequence Modeling</span>
+    <span class="tag active">LSTM</span>
+    <span class="tag active">GRU</span>
+    <span class="tag">Vanishing Gradient</span>
+    <span class="tag">Time Series</span>
+    <span class="tag active">Stock Prediction</span>
+    <span class="tag">Backpropagation Through Time</span>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<!-- ===========================
+     SECTION 0: WHY SEQUENCE
+     =========================== -->
+<section class="section" id="intro">
+  <div class="section-header">
+    <span class="section-num">00 // FOUNDATION</span>
+    <h2 class="section-title">Why Do We Need Sequence Memory?</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🧠</span> The Problem with Normal Neural Networks</div>
+    <p>
+      A standard neural network — also called a <strong>Feedforward Neural Network</strong> — processes each input independently. It has no concept of "what came before." Imagine you are reading the sentence:
+    </p>
+    <div class="highlight">
+      <em>"The cat sat on the mat because it was tired."</em>
+      <br><br>
+      To understand what <strong>"it"</strong> refers to, you need to remember the word <strong>"cat"</strong> from earlier in the sentence. A standard neural network cannot do this — it processes "it" without any memory of the previous words.
+    </div>
+    <p>
+      This is the core challenge of <strong>sequential data</strong>: data where order and context matter. Examples include:
+    </p>
+    <ul class="styled-list">
+      <li>Language and text (the meaning of a word depends on what came before)</li>
+      <li>Music (each note makes sense relative to the melody so far)</li>
+      <li>Stock prices (today's price depends on recent trends)</li>
+      <li>Weather (tomorrow's forecast depends on the past week)</li>
+      <li>Video frames (each frame connects to previous frames)</li>
+    </ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">📊</span> Feedforward Network (No Memory)</div>
+      <svg width="100%" height="140" viewBox="0 0 300 140">
+        <defs>
+          <marker id="arr1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#4a6a80"/>
+          </marker>
+        </defs>
+        <!-- Inputs -->
+        <circle cx="30" cy="50" r="16" fill="#0a1520" stroke="#1a3050" stroke-width="1.5"/>
+        <text x="30" y="54" text-anchor="middle" fill="#7a9ab5" font-size="9">x₁</text>
+        <circle cx="30" cy="90" r="16" fill="#0a1520" stroke="#1a3050" stroke-width="1.5"/>
+        <text x="30" y="94" text-anchor="middle" fill="#7a9ab5" font-size="9">x₂</text>
+        <!-- Hidden -->
+        <circle cx="120" cy="70" r="18" fill="#0a1520" stroke="#00e5ff" stroke-width="1.5"/>
+        <text x="120" y="74" text-anchor="middle" fill="#00e5ff" font-size="9">h</text>
+        <!-- Output -->
+        <circle cx="220" cy="70" r="16" fill="#0a1520" stroke="#00ff9d" stroke-width="1.5"/>
+        <text x="220" y="74" text-anchor="middle" fill="#00ff9d" font-size="9">y</text>
+        <!-- Connections -->
+        <line x1="46" y1="54" x2="102" y2="64" stroke="#1a3050" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="46" y1="86" x2="102" y2="76" stroke="#1a3050" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="138" y1="70" x2="204" y2="70" stroke="#1a3050" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <!-- Label -->
+        <text x="150" y="120" text-anchor="middle" fill="#4a6a80" font-size="8">Each input processed independently</text>
+        <text x="150" y="132" text-anchor="middle" fill="#ff6b6b" font-size="8">✗ No memory of previous inputs</text>
+      </svg>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🔄</span> Recurrent Network (Has Memory)</div>
+      <svg width="100%" height="140" viewBox="0 0 300 140">
+        <defs>
+          <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#00e5ff"/>
+          </marker>
+          <marker id="arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#00ff9d"/>
+          </marker>
+        </defs>
+        <circle cx="50" cy="70" r="16" fill="#0a1520" stroke="#ffb800" stroke-width="1.5"/>
+        <text x="50" y="74" text-anchor="middle" fill="#ffb800" font-size="9">xₜ</text>
+        <circle cx="150" cy="70" r="20" fill="#0d1a26" stroke="#00e5ff" stroke-width="2"/>
+        <text x="150" y="74" text-anchor="middle" fill="#00e5ff" font-size="9">RNN</text>
+        <circle cx="250" cy="70" r="16" fill="#0a1520" stroke="#00ff9d" stroke-width="1.5"/>
+        <text x="250" y="74" text-anchor="middle" fill="#00ff9d" font-size="9">yₜ</text>
+        <!-- Self loop -->
+        <path d="M 150,50 Q 150,15 150,50" fill="none" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#arr2)" stroke-dasharray="3,2"/>
+        <text x="150" y="12" text-anchor="middle" fill="#00e5ff" font-size="8">hₜ→hₜ₊₁</text>
+        <!-- Connections -->
+        <line x1="66" y1="70" x2="130" y2="70" stroke="#ffb800" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="170" y1="70" x2="234" y2="70" stroke="#00ff9d" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <text x="150" y="115" text-anchor="middle" fill="#4a6a80" font-size="8">Hidden state carries memory</text>
+        <text x="150" y="127" text-anchor="middle" fill="#00ff9d" font-size="8">✓ Remembers previous context</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE SEQUENCE DEMO -->
+  <div class="seq-demo">
+    <div class="num-demo-title">
+      <span>▶</span> Interactive Demo: How Memory Works in a Sequence
+    </div>
+    <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">Watch how each word is processed one at a time. The hidden state (memory) is updated at each step and carries information forward.</p>
+    <div class="seq-track" id="seq-track"></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.75rem 0;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text2);">Hidden State (Memory):</span>
+      <div style="flex:1;">
+        <div class="memory-cell">
+          <span class="memory-label">Concept:</span>
+          <div class="memory-bar" id="mem-bar1" style="width:0%"></div>
+          <span class="memory-val" id="mem-val1">0.00</span>
+        </div>
+        <div class="memory-cell">
+          <span class="memory-label">Entity:</span>
+          <div class="memory-bar" id="mem-bar2" style="width:0%;background:linear-gradient(90deg,var(--amber),var(--pink))"></div>
+          <span class="memory-val" id="mem-val2">0.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="demo-controls">
+      <button class="btn primary" onclick="stepSequence()">Step Forward →</button>
+      <button class="btn" onclick="resetSequence()">Reset</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 1: RNN DEEP DIVE
+     =========================== -->
+<section class="section" id="rnn">
+  <div class="section-header">
+    <span class="section-num">01 // ARCHITECTURE</span>
+    <h2 class="section-title">Recurrent Neural Networks</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">📐</span> What is a Recurrent Neural Network?</div>
+    <p>
+      A <strong>Recurrent Neural Network (RNN)</strong> is a type of neural network designed specifically for sequential data. The word "recurrent" means "occurring repeatedly" — and that is exactly what happens: the network loops over each element in the sequence, <strong>maintaining a hidden state</strong> that acts like a memory.
+    </p>
+    <p>
+      Think of it like reading a book. When you read word by word, you carry the context of everything you have read so far in your mind. As you read each new word, you update your understanding. An RNN does the same: at each time step, it takes the current input AND its previous memory, and produces a new memory state.
+    </p>
+  </div>
+
+  <!-- UNROLLED RNN ANIMATION -->
+  <div class="arch-diagram">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--cyan);letter-spacing:0.1em;margin-bottom:1.25rem;text-transform:uppercase;">RNN Unrolled Through Time</div>
+    <div class="rnn-unroll" id="rnn-unroll">
+      <!-- Filled by JS -->
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text3);margin-top:0.75rem;">
+      ↑ Each cell shares the same weights W — the network is "unrolled" for visualization. In reality, it's one cell processing elements one by one.
+    </div>
+  </div>
+
+  <!-- CORE EQUATION -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🔢</span> The Core RNN Equations (Explained Step by Step)</div>
+
+    <p>At every time step <code>t</code>, the RNN performs exactly two calculations:</p>
+
+    <div class="formula">
+      <span class="formula-label">Equation 1 — Hidden State Update</span>
+      hₜ = tanh( Wₕ·hₜ₋₁ + Wₓ·xₜ + b )
+    </div>
+
+    <div class="formula">
+      <span class="formula-label">Equation 2 — Output</span>
+      yₜ = Wᵧ·hₜ + bᵧ
+    </div>
+
+    <table class="comparison-table" style="margin-top:1.25rem;">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Full Name</th>
+          <th>What It Means</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>hₜ</code></td><td>Hidden State at time t</td><td>The "memory" of the network at the current step</td></tr>
+        <tr><td><code>hₜ₋₁</code></td><td>Previous Hidden State</td><td>The memory from the last step — carries past information</td></tr>
+        <tr><td><code>xₜ</code></td><td>Input at time t</td><td>The current input (e.g., the current word or stock price)</td></tr>
+        <tr><td><code>Wₕ</code></td><td>Recurrent Weight Matrix</td><td>Learned weights for combining past memory</td></tr>
+        <tr><td><code>Wₓ</code></td><td>Input Weight Matrix</td><td>Learned weights for processing new input</td></tr>
+        <tr><td><code>b</code></td><td>Bias</td><td>Adjustment term, helps the network learn offsets</td></tr>
+        <tr><td><code>tanh</code></td><td>Hyperbolic Tangent</td><td>Activation function — squishes values to range [-1, 1]</td></tr>
+        <tr><td><code>yₜ</code></td><td>Output at time t</td><td>The prediction or output at this step</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NUMERICAL WALKTHROUGH -->
+  <div class="num-demo">
+    <div class="num-demo-title">
+      <span>🔢</span> Numerical Walkthrough: RNN Step by Step
+    </div>
+    <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">
+      Let's trace through an RNN with tiny numbers to see exactly what happens. We'll predict the next value in a simple sequence: <strong>[1, 2, 3, ?]</strong>
+    </p>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text2);margin-bottom:1rem;">
+      Setup: h₀ = 0 (no initial memory) &nbsp;|&nbsp; Wₓ = 0.5 (input weight) &nbsp;|&nbsp; Wₕ = 0.8 (recurrent weight) &nbsp;|&nbsp; b = 0.1
+    </p>
+    <div class="step-grid" id="rnn-steps">
+      <div class="step-row" id="rs1">
+        <span class="step-num">STEP t=1</span>
+        <div class="step-content">
+          Input: <span class="val">x₁ = 1</span>  &nbsp;|&nbsp; Previous hidden: <span class="val">h₀ = 0</span><br>
+          h₁ = tanh( <span class="val">0.5</span>×<span class="val">1</span> + <span class="val">0.8</span>×<span class="val">0</span> + <span class="val">0.1</span> )<br>
+          h₁ = tanh( <span class="val">0.5 + 0 + 0.1</span> ) = tanh(<span class="val">0.6</span>)<br>
+          <span class="eq">h₁ = 0.537</span> ← Network now remembers seeing "1"
+        </div>
+      </div>
+      <div class="step-row" id="rs2">
+        <span class="step-num">STEP t=2</span>
+        <div class="step-content">
+          Input: <span class="val">x₂ = 2</span>  &nbsp;|&nbsp; Previous hidden: <span class="val">h₁ = 0.537</span><br>
+          h₂ = tanh( <span class="val">0.5</span>×<span class="val">2</span> + <span class="val">0.8</span>×<span class="val">0.537</span> + <span class="val">0.1</span> )<br>
+          h₂ = tanh( <span class="val">1.0 + 0.43 + 0.1</span> ) = tanh(<span class="val">1.53</span>)<br>
+          <span class="eq">h₂ = 0.909</span> ← Now carries memory of both 1 and 2
+        </div>
+      </div>
+      <div class="step-row" id="rs3">
+        <span class="step-num">STEP t=3</span>
+        <div class="step-content">
+          Input: <span class="val">x₃ = 3</span>  &nbsp;|&nbsp; Previous hidden: <span class="val">h₂ = 0.909</span><br>
+          h₃ = tanh( <span class="val">0.5</span>×<span class="val">3</span> + <span class="val">0.8</span>×<span class="val">0.909</span> + <span class="val">0.1</span> )<br>
+          h₃ = tanh( <span class="val">1.5 + 0.727 + 0.1</span> ) = tanh(<span class="val">2.327</span>)<br>
+          <span class="eq">h₃ = 0.981</span> ← Compressed memory of the full sequence [1,2,3]
+        </div>
+      </div>
+      <div class="step-row" id="rs4">
+        <span class="step-num">OUTPUT</span>
+        <div class="step-content">
+          y = Wᵧ × h₃ = <span class="val">2.0</span> × <span class="val">0.981</span><br>
+          <span class="eq">ŷ = 1.962 ≈ 2</span> &nbsp;(After training with more data, weights adjust to predict ~4)<br>
+          <span style="color:var(--text3);font-size:0.75em;">Note: Real prediction accuracy comes after backpropagation training, not from these initial weights</span>
+        </div>
+      </div>
+    </div>
+    <div class="demo-controls">
+      <button class="btn primary" onclick="animateRNNSteps()">Animate Steps</button>
+      <button class="btn" onclick="resetRNNSteps()">Reset</button>
+    </div>
+  </div>
+
+  <!-- RNN TYPES -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🗂️</span> Types of RNN Architectures</div>
+    <p>Depending on the task, we choose different input-output configurations:</p>
+    <div class="grid-2" style="margin-top:1rem;">
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--amber);margin-bottom:0.5rem;">ONE → ONE</div>
+        <div style="font-size:0.85rem;color:var(--text2);">Standard neural network. Single input → single output.<br><em>Example: Image classification</em></div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.5rem;">ONE → MANY</div>
+        <div style="font-size:0.85rem;color:var(--text2);">Single input → sequence output.<br><em>Example: Image to caption generation</em></div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--green);margin-bottom:0.5rem;">MANY → ONE</div>
+        <div style="font-size:0.85rem;color:var(--text2);">Sequence input → single output.<br><em>Example: Sentiment analysis of a review</em></div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--pink);margin-bottom:0.5rem;">MANY → MANY</div>
+        <div style="font-size:0.85rem;color:var(--text2);">Sequence in → sequence out.<br><em>Example: Language translation, stock prediction</em></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VANISHING GRADIENT -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">⚠️</span> The Vanishing Gradient Problem</div>
+    <p>
+      The biggest weakness of vanilla RNNs is called the <strong>Vanishing Gradient Problem</strong>. Here is what happens during training:
+    </p>
+    <p>
+      When we train a neural network, we use a process called <strong>Backpropagation Through Time (BPTT)</strong>. This means we calculate how wrong the network was, and then send that error signal backwards through all the time steps to adjust the weights.
+    </p>
+    <div class="highlight amber">
+      <strong>The Problem:</strong> As the error signal travels backwards through many time steps, it gets multiplied by the weight matrix at each step. If those weights are small (less than 1), the gradient gets <em>exponentially smaller</em> — it "vanishes" before reaching the early time steps. The network cannot learn long-range dependencies.
+    </div>
+
+    <svg width="100%" height="100" viewBox="0 0 600 100" style="margin:1rem 0;">
+      <text x="10" y="20" fill="#7a9ab5" font-size="9" font-family="JetBrains Mono">Gradient magnitude flowing backwards through time:</text>
+      <!-- Boxes -->
+      <rect x="10" y="35" width="50" height="35" fill="#0a1520" stroke="#1a3050"/>
+      <text x="35" y="57" text-anchor="middle" fill="#7a9ab5" font-size="8">t=1</text>
+      <rect x="100" y="35" width="50" height="35" fill="#0a1520" stroke="#1a3050"/>
+      <text x="125" y="57" text-anchor="middle" fill="#7a9ab5" font-size="8">t=2</text>
+      <rect x="190" y="35" width="50" height="35" fill="#0a1520" stroke="#1a3050"/>
+      <text x="215" y="57" text-anchor="middle" fill="#7a9ab5" font-size="8">t=3</text>
+      <rect x="280" y="35" width="50" height="35" fill="#0a1520" stroke="#1a3050"/>
+      <text x="305" y="57" text-anchor="middle" fill="#7a9ab5" font-size="8">t=4</text>
+      <rect x="370" y="35" width="50" height="35" fill="#0a1520" stroke="#00e5ff" stroke-width="2"/>
+      <text x="395" y="57" text-anchor="middle" fill="#00e5ff" font-size="8">t=T</text>
+      <!-- Gradient arrows -->
+      <line x1="370" y1="52" x2="240" y2="52" stroke="#ff6b6b" stroke-width="3" marker-end="url(#arr1)"/>
+      <line x1="240" y1="52" x2="190" y2="52" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <line x1="190" y1="52" x2="150" y2="52" stroke="#ff6b6b" stroke-width="0.8" marker-end="url(#arr1)"/>
+      <line x1="150" y1="52" x2="60" y2="52" stroke="#ff6b6b" stroke-width="0.2" marker-end="url(#arr1)"/>
+      <!-- Labels -->
+      <text x="430" y="52" fill="#00e5ff" font-size="8">Strong signal</text>
+      <text x="30" y="85" fill="#4a6a80" font-size="8">Almost zero signal — network can't learn from early steps!</text>
+    </svg>
+
+    <p>This is why <strong>Long Short-Term Memory (LSTM)</strong> and <strong>Gated Recurrent Unit (GRU)</strong> networks were invented — they solve this problem with special "gate" mechanisms.</p>
+  </div>
+
+  <!-- BACKPROP THROUGH TIME -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">↩️</span> Backpropagation Through Time (BPTT) — Explained</div>
+    <p>
+      <strong>Backpropagation Through Time</strong> is how RNNs learn. In a regular neural network, we send the error backwards layer by layer. In an RNN, we "unroll" the network through time and send the error backwards through each time step.
+    </p>
+    <ol style="padding-left:1.5rem;color:var(--text);line-height:2;">
+      <li>Run the RNN forward through the full sequence (forward pass)</li>
+      <li>Calculate the loss (how wrong was the final prediction?)</li>
+      <li>Send the error backwards through each time step (backward pass)</li>
+      <li>At each step, compute how much each weight contributed to the error</li>
+      <li>Update weights to reduce the error</li>
+    </ol>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 2: LSTM
+     =========================== -->
+<section class="section" id="lstm">
+  <div class="section-header">
+    <span class="section-num">02 // ARCHITECTURE</span>
+    <h2 class="section-title">Long Short-Term Memory Networks</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🏛️</span> What is LSTM?</div>
+    <p>
+      <strong>Long Short-Term Memory (LSTM)</strong> was invented by Sepp Hochreiter and Jürgen Schmidhuber in <strong>1997</strong>. It was a breakthrough solution to the vanishing gradient problem.
+    </p>
+    <p>
+      The key innovation: instead of a single hidden state, LSTM has <strong>two separate tracks of information</strong>:
+    </p>
+    <div class="grid-2">
+      <div style="background:var(--code-bg);border:1px solid rgba(176,108,255,0.3);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--purple);margin-bottom:0.5rem;">CELL STATE (Cₜ)</div>
+        <div style="font-size:0.88rem;color:var(--text2);">The "long-term memory". Runs straight through with only minor linear interactions — gradients flow easily. Think of it as a conveyor belt.</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid rgba(0,229,255,0.3);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.5rem;">HIDDEN STATE (hₜ)</div>
+        <div style="font-size:0.88rem;color:var(--text2);">The "short-term memory" or working memory. Passed between time steps and used for output predictions.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE 4 GATES -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🚪</span> The Four Gates of LSTM — The Heart of the Architecture</div>
+    <p>LSTM uses <strong>gates</strong> to control what information flows through. A gate is simply a sigmoid activation (outputs 0 to 1) multiplied by the information — 0 means "block completely", 1 means "let everything through".</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:1rem 0;">
+      <span class="gate-indicator gate-forget">🗑️ Forget Gate</span>
+      <span class="gate-indicator gate-input">✍️ Input Gate</span>
+      <span class="gate-indicator gate-cell">🧮 Candidate Gate</span>
+      <span class="gate-indicator gate-output">📤 Output Gate</span>
+    </div>
+
+    <div class="grid-2" style="margin-top:1rem;">
+      <div style="background:var(--code-bg);border:1px solid rgba(255,107,107,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#ff6b6b;margin-bottom:0.5rem;">① FORGET GATE — fₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">fₜ = σ( Wf · [hₜ₋₁, xₜ] + bf )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          <strong style="color:#fff;">Question it asks:</strong> "What old information should I throw away?"<br><br>
+          Uses a <strong>sigmoid</strong> function (outputs 0 to 1). Multiplied element-wise with the previous cell state. <strong>0 = completely forget, 1 = completely keep.</strong>
+        </p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid rgba(255,184,0,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--amber);margin-bottom:0.5rem;">② INPUT GATE — iₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">iₜ = σ( Wi · [hₜ₋₁, xₜ] + bi )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          <strong style="color:#fff;">Question it asks:</strong> "What new information should I store?"<br><br>
+          Decides which new values to update. Works together with the <strong>Candidate Gate</strong> to decide what gets written into the cell state.
+        </p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid rgba(176,108,255,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--purple);margin-bottom:0.5rem;">③ CANDIDATE GATE — C̃ₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">C̃ₜ = tanh( Wc · [hₜ₋₁, xₜ] + bc )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          Creates a vector of <strong>candidate values</strong> that could be added to the cell state. Uses tanh to keep values between [-1, 1]. The input gate then filters which of these candidates are actually added.
+        </p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid rgba(0,255,157,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--green);margin-bottom:0.5rem;">④ OUTPUT GATE — oₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">oₜ = σ( Wo · [hₜ₋₁, xₜ] + bo )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          <strong style="color:#fff;">Question it asks:</strong> "What should I output?"<br><br>
+          Determines what part of the cell state becomes the new hidden state (which is also the output).
+        </p>
+      </div>
+    </div>
+
+    <!-- FULL UPDATE EQUATIONS -->
+    <div style="margin-top:1.5rem;">
+      <p><strong>The Complete Cell State Update (putting it all together):</strong></p>
+      <div class="formula">
+        <span class="formula-label">Cell State Update</span>
+        Cₜ = fₜ ⊙ Cₜ₋₁ + iₜ ⊙ C̃ₜ
+      </div>
+      <div class="formula">
+        <span class="formula-label">New Hidden State</span>
+        hₜ = oₜ ⊙ tanh(Cₜ)
+      </div>
+      <p style="font-size:0.85rem;color:var(--text2);margin-top:0.75rem;">
+        <code>⊙</code> means <strong>element-wise multiplication</strong> (Hadamard product). The forget gate "erases" parts of the old cell state, and the input gate "writes" new information in.
+      </p>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE LSTM GATE DEMO -->
+  <div class="num-demo">
+    <div class="num-demo-title">
+      <span>🔢</span> Numerical LSTM Example: Remembering a Person's Name
+    </div>
+    <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">
+      Scenario: The network reads "Alice is a doctor. She later became..." — at "She", the network must remember "Alice" (a female). Let's trace the LSTM gates.
+    </p>
+
+    <div class="step-grid" id="lstm-steps">
+      <div class="step-row" id="ls1">
+        <span class="step-num">INPUT</span>
+        <div class="step-content">
+          xₜ = "She" &nbsp;|&nbsp; hₜ₋₁ = [<span class="val">0.8</span>, <span class="val">0.2</span>, <span class="val">0.9</span>] (encodes: female name, past tense, subject)<br>
+          Cₜ₋₁ = [<span class="val">0.7</span>, <span class="val">0.1</span>, <span class="val">0.8</span>] (long-term: Alice remembered in cell state)
+        </div>
+      </div>
+      <div class="step-row" id="ls2">
+        <span class="step-num" style="color:#ff6b6b;">FORGET</span>
+        <div class="step-content">
+          fₜ = σ(Wf · [hₜ₋₁, xₜ]) ≈ [<span class="val">0.9</span>, <span class="val">0.1</span>, <span class="val">0.95</span>]<br>
+          <span class="eq">Interpretation:</span> Keep 90% of "Alice is female" (index 0), forget 90% of "past tense" (index 1), keep 95% of "is subject" (index 2)<br>
+          After forget: Cₜ₋₁ × fₜ = [<span class="val">0.63</span>, <span class="val">0.01</span>, <span class="val">0.76</span>]
+        </div>
+      </div>
+      <div class="step-row" id="ls3">
+        <span class="step-num" style="color:var(--amber);">INPUT</span>
+        <div class="step-content">
+          iₜ = σ(...) ≈ [<span class="val">0.05</span>, <span class="val">0.9</span>, <span class="val">0.1</span>]&nbsp; &nbsp;C̃ₜ = tanh(...) ≈ [<span class="val">0.1</span>, <span class="val">0.8</span>, <span class="val">0.5</span>]<br>
+          New info to add: iₜ × C̃ₜ = [<span class="val">0.005</span>, <span class="val">0.72</span>, <span class="val">0.05</span>]<br>
+          <span class="eq">Interpretation:</span> Write in new info: "She is a pronoun referring to a person" (index 1 activated strongly)
+        </div>
+      </div>
+      <div class="step-row" id="ls4">
+        <span class="step-num" style="color:var(--purple);">CELL</span>
+        <div class="step-content">
+          Cₜ = [<span class="val">0.63</span>, <span class="val">0.01</span>, <span class="val">0.76</span>] + [<span class="val">0.005</span>, <span class="val">0.72</span>, <span class="val">0.05</span>]<br>
+          <span class="eq">Cₜ = [0.635, 0.73, 0.81]</span> ← Cell state now holds: Alice's gender, pronoun reference, subject role
+        </div>
+      </div>
+      <div class="step-row" id="ls5">
+        <span class="step-num" style="color:var(--green);">OUTPUT</span>
+        <div class="step-content">
+          oₜ = σ(...) ≈ [<span class="val">0.8</span>, <span class="val">0.6</span>, <span class="val">0.9</span>]<br>
+          hₜ = oₜ × tanh(Cₜ) = [<span class="val">0.8</span>, <span class="val">0.6</span>, <span class="val">0.9</span>] × [<span class="val">0.56</span>, <span class="val">0.62</span>, <span class="val">0.67</span>]<br>
+          <span class="eq">hₜ = [0.448, 0.372, 0.603]</span> ← Hidden state ready to help predict the next word
+        </div>
+      </div>
+    </div>
+    <div class="demo-controls">
+      <button class="btn primary" onclick="animateLSTMSteps()">Step Through Gates</button>
+      <button class="btn" onclick="resetLSTMSteps()">Reset</button>
+    </div>
+  </div>
+
+  <!-- LSTM DIAGRAM SVG -->
+  <div class="lstm-diagram">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--cyan);letter-spacing:0.1em;margin-bottom:1.25rem;text-transform:uppercase;">LSTM Cell — Internal Architecture</div>
+    <svg width="100%" height="300" viewBox="0 0 700 300" style="max-width:700px;display:block;margin:auto;">
+      <!-- Cell State highway -->
+      <line x1="30" y1="50" x2="670" y2="50" stroke="#b06cff" stroke-width="3"/>
+      <text x="30" y="43" fill="#b06cff" font-size="10">Cₜ₋₁</text>
+      <text x="640" y="43" fill="#b06cff" font-size="10">Cₜ</text>
+      <text x="340" y="35" text-anchor="middle" fill="#b06cff" font-size="9">CELL STATE HIGHWAY — Long-term memory flows here</text>
+
+      <!-- Forget gate -->
+      <circle cx="160" cy="50" r="18" fill="#0d1a26" stroke="#ff6b6b" stroke-width="2"/>
+      <text x="160" y="54" text-anchor="middle" fill="#ff6b6b" font-size="11">×</text>
+      <text x="160" y="90" text-anchor="middle" fill="#ff6b6b" font-size="9">Forget</text>
+      <text x="160" y="100" text-anchor="middle" fill="#ff6b6b" font-size="9">Gate fₜ</text>
+      <rect x="130" y="150" width="60" height="28" rx="3" fill="#0d1a26" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="160" y="168" text-anchor="middle" fill="#ff6b6b" font-size="9">σ</text>
+      <line x1="160" y1="178" x2="160" y2="68" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+      <!-- Input gate -->
+      <circle cx="310" cy="50" r="18" fill="#0d1a26" stroke="#ffb800" stroke-width="2"/>
+      <text x="310" y="54" text-anchor="middle" fill="#ffb800" font-size="11">+</text>
+      <text x="310" y="90" text-anchor="middle" fill="#ffb800" font-size="9">Input</text>
+      <text x="310" y="100" text-anchor="middle" fill="#ffb800" font-size="9">Gate iₜ</text>
+      <rect x="250" y="150" width="55" height="28" rx="3" fill="#0d1a26" stroke="#ffb800" stroke-width="1.5"/>
+      <text x="277" y="168" text-anchor="middle" fill="#ffb800" font-size="9">σ</text>
+      <rect x="315" y="150" width="55" height="28" rx="3" fill="#0d1a26" stroke="#b06cff" stroke-width="1.5"/>
+      <text x="342" y="168" text-anchor="middle" fill="#b06cff" font-size="9">tanh</text>
+      <!-- Multiply node -->
+      <circle cx="310" cy="120" r="12" fill="#0d1a26" stroke="#ffb800" stroke-width="1.5"/>
+      <text x="310" y="124" text-anchor="middle" fill="#ffb800" font-size="11">×</text>
+      <line x1="277" y1="150" x2="300" y2="132" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="342" y1="150" x2="320" y2="132" stroke="#b06cff" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="310" y1="108" x2="310" y2="68" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+      <!-- Output gate -->
+      <circle cx="530" cy="140" r="18" fill="#0d1a26" stroke="#00ff9d" stroke-width="2"/>
+      <text x="530" y="144" text-anchor="middle" fill="#00ff9d" font-size="11">×</text>
+      <text x="530" y="180" text-anchor="middle" fill="#00ff9d" font-size="9">Output</text>
+      <text x="530" y="190" text-anchor="middle" fill="#00ff9d" font-size="9">Gate oₜ</text>
+      <rect x="500" y="220" width="60" height="28" rx="3" fill="#0d1a26" stroke="#00ff9d" stroke-width="1.5"/>
+      <text x="530" y="238" text-anchor="middle" fill="#00ff9d" font-size="9">σ</text>
+      <line x1="530" y1="220" x2="530" y2="158" stroke="#00ff9d" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <!-- tanh on output -->
+      <rect x="460" y="128" width="55" height="24" rx="3" fill="#0d1a26" stroke="#b06cff" stroke-width="1.5"/>
+      <text x="487" y="144" text-anchor="middle" fill="#b06cff" font-size="9">tanh</text>
+      <line x1="487" y1="128" x2="487" y2="65" stroke="#b06cff" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <line x1="515" y1="140" x2="487" y2="140" stroke="#b06cff" stroke-width="1.5"/>
+
+      <!-- Inputs from bottom -->
+      <line x1="160" y1="270" x2="160" y2="178" stroke="#7a9ab5" stroke-width="1.5"/>
+      <line x1="277" y1="270" x2="277" y2="178" stroke="#7a9ab5" stroke-width="1.5"/>
+      <line x1="342" y1="270" x2="342" y2="178" stroke="#7a9ab5" stroke-width="1.5"/>
+      <line x1="530" y1="270" x2="530" y2="248" stroke="#7a9ab5" stroke-width="1.5"/>
+      <text x="160" y="285" text-anchor="middle" fill="#7a9ab5" font-size="9">[hₜ₋₁,xₜ]</text>
+      <text x="310" y="285" text-anchor="middle" fill="#7a9ab5" font-size="9">[hₜ₋₁,xₜ]</text>
+      <text x="530" y="285" text-anchor="middle" fill="#7a9ab5" font-size="9">[hₜ₋₁,xₜ]</text>
+
+      <!-- Output arrow -->
+      <line x1="548" y1="140" x2="600" y2="140" stroke="#00ff9d" stroke-width="2"/>
+      <text x="615" y="144" fill="#00ff9d" font-size="10">hₜ</text>
+    </svg>
+  </div>
+
+  <!-- WHY LSTM SOLVES VANISHING GRADIENT -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">✅</span> Why LSTM Solves the Vanishing Gradient Problem</div>
+    <p>
+      The key insight is the <strong>cell state pathway</strong>. Because the cell state only undergoes <em>element-wise</em> multiplication and addition (not matrix multiplications through many layers), gradients can flow back through hundreds of time steps without shrinking to near-zero.
+    </p>
+    <div class="highlight green">
+      <strong>The Cell State is like a highway for gradients.</strong> During backpropagation, gradients flow through this highway with little obstruction. The gates allow the network to learn to "protect" important gradients from vanishing.
+    </div>
+    <p>
+      The <strong>forget gate</strong> is especially important here — when the forget gate is set to 1 for a particular dimension, that dimension's gradient flows back perfectly unchanged. This enables LSTMs to learn dependencies across hundreds or even thousands of time steps.
+    </p>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 3: GRU
+     =========================== -->
+<section class="section" id="gru">
+  <div class="section-header">
+    <span class="section-num">03 // ARCHITECTURE</span>
+    <h2 class="section-title">Gated Recurrent Units</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">⚡</span> What is a GRU?</div>
+    <p>
+      <strong>Gated Recurrent Unit (GRU)</strong> was introduced by Kyunghyun Cho et al. in <strong>2014</strong>. It is a simplified version of LSTM that achieves similar performance but with <strong>fewer parameters</strong> and faster training.
+    </p>
+    <p>
+      GRU makes two key simplifications compared to LSTM:
+    </p>
+    <ul class="styled-list">
+      <li>Combines the <strong>forget gate</strong> and <strong>input gate</strong> into a single <strong>Update Gate</strong></li>
+      <li>Merges the <strong>cell state</strong> and <strong>hidden state</strong> into a single <strong>hidden state</strong></li>
+    </ul>
+    <p>
+      The result: GRU uses <strong>2 gates</strong> instead of LSTM's 4, fewer parameters, trains faster, and works just as well on many tasks.
+    </p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">📐</span> GRU Architecture and Equations</div>
+
+    <div class="grid-2">
+      <div style="background:var(--code-bg);border:1px solid rgba(0,229,255,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--cyan);margin-bottom:0.5rem;">① RESET GATE — rₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">rₜ = σ( Wr · [hₜ₋₁, xₜ] )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          Controls <strong>how much of the past to forget</strong> when creating the candidate hidden state. When rₜ ≈ 0, it ignores the previous state entirely (like starting fresh).
+        </p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid rgba(255,184,0,0.25);padding:1.25rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--amber);margin-bottom:0.5rem;">② UPDATE GATE — zₜ</div>
+        <div class="formula" style="margin:0.5rem 0;font-size:0.78rem;">zₜ = σ( Wz · [hₜ₋₁, xₜ] )</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin:0;">
+          Controls <strong>how much to update the hidden state</strong>. When zₜ ≈ 1, keep old state (like LSTM's forget gate keeping everything). When zₜ ≈ 0, replace with new information.
+        </p>
+      </div>
+    </div>
+
+    <div class="formula" style="margin-top:1rem;">
+      <span class="formula-label">Candidate Hidden State</span>
+      h̃ₜ = tanh( W · [rₜ ⊙ hₜ₋₁, xₜ] )
+    </div>
+    <div class="formula">
+      <span class="formula-label">Final Hidden State</span>
+      hₜ = (1 - zₜ) ⊙ hₜ₋₁ + zₜ ⊙ h̃ₜ
+    </div>
+
+    <div class="highlight">
+      <strong>Elegant design:</strong> The final state update is a <strong>linear interpolation</strong> between the old state and the candidate. When zₜ = 0, it keeps the old state. When zₜ = 1, it fully adopts the new candidate. This single gate replaces both forget and input gates of LSTM!
+    </div>
+  </div>
+
+  <!-- RNN vs LSTM vs GRU COMPARISON -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">⚖️</span> RNN vs LSTM vs GRU — Head-to-Head Comparison</div>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Vanilla RNN</th>
+          <th>LSTM</th>
+          <th>GRU</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Number of Gates</strong></td>
+          <td><span class="badge badge-amber">0</span></td>
+          <td><span class="badge badge-amber">4 gates</span></td>
+          <td><span class="badge badge-green">2 gates</span></td>
+        </tr>
+        <tr>
+          <td><strong>Memory States</strong></td>
+          <td>1 (hidden state h)</td>
+          <td>2 (cell state C + hidden h)</td>
+          <td>1 (hidden state h)</td>
+        </tr>
+        <tr>
+          <td><strong>Long-term Dependencies</strong></td>
+          <td><span class="badge badge-red">Poor</span></td>
+          <td><span class="badge badge-green">Excellent</span></td>
+          <td><span class="badge badge-green">Very Good</span></td>
+        </tr>
+        <tr>
+          <td><strong>Training Speed</strong></td>
+          <td><span class="badge badge-green">Fastest</span></td>
+          <td><span class="badge badge-red">Slowest</span></td>
+          <td><span class="badge badge-green">Fast</span></td>
+        </tr>
+        <tr>
+          <td><strong>Number of Parameters</strong></td>
+          <td>Fewest</td>
+          <td>Most (4× RNN)</td>
+          <td>Moderate (3× RNN)</td>
+        </tr>
+        <tr>
+          <td><strong>Vanishing Gradient</strong></td>
+          <td><span class="badge badge-red">Severe problem</span></td>
+          <td><span class="badge badge-green">Solved</span></td>
+          <td><span class="badge badge-green">Largely solved</span></td>
+        </tr>
+        <tr>
+          <td><strong>Best For</strong></td>
+          <td>Simple short sequences, learning</td>
+          <td>Long sequences, complex tasks, NLP</td>
+          <td>Medium sequences, when training speed matters</td>
+        </tr>
+        <tr>
+          <td><strong>Real Use Cases</strong></td>
+          <td>Toy examples, baseline</td>
+          <td>Machine translation, speech</td>
+          <td>Time series, medium-length sequences</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <span class="callout-icon">💡</span>
+      <div class="callout-text">
+        <strong>Rule of Thumb:</strong> In practice, try GRU first — it trains faster and often performs similarly to LSTM. If performance is not good enough on very long sequences (thousands of steps), switch to LSTM. Vanilla RNN is mainly used for educational purposes today.
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE QUIZ -->
+  <div class="quiz-card">
+    <div class="quiz-q">🧠 Quick Check: Which gate in an LSTM is responsible for deciding what to "forget" from the previous cell state?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="checkQuiz(this, false)">A. The Input Gate</button>
+      <button class="quiz-opt" onclick="checkQuiz(this, true)">B. The Forget Gate</button>
+      <button class="quiz-opt" onclick="checkQuiz(this, false)">C. The Output Gate</button>
+      <button class="quiz-opt" onclick="checkQuiz(this, false)">D. The Update Gate</button>
+    </div>
+    <div class="quiz-feedback" id="quiz-fb1">✓ Correct! The <strong>Forget Gate (fₜ)</strong> uses a sigmoid activation to output values between 0 and 1. These are multiplied with the previous cell state: 0 = completely forget, 1 = keep entirely. This is how LSTM decides what long-term memories are no longer relevant.</div>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 4: TIME SERIES
+     =========================== -->
+<section class="section" id="timeseries">
+  <div class="section-header">
+    <span class="section-num">04 // APPLICATION</span>
+    <h2 class="section-title">Time Series Forecasting with RNNs</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">📈</span> What is Time Series Data?</div>
+    <p>
+      A <strong>time series</strong> is a sequence of data points collected or indexed in chronological (time) order. Each data point is associated with a timestamp. The key characteristic: <strong>the order matters</strong>, and values at one time are often influenced by values at previous times.
+    </p>
+    <div class="grid-3">
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--cyan);margin-bottom:0.4rem;">FINANCIAL</div>
+        <div style="font-size:0.82rem;color:var(--text2);">Stock prices, exchange rates, cryptocurrency values, trading volumes</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--amber);margin-bottom:0.4rem;">NATURAL</div>
+        <div style="font-size:0.82rem;color:var(--text2);">Temperature, rainfall, seismic activity, solar energy output</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--green);margin-bottom:0.4rem;">INDUSTRIAL</div>
+        <div style="font-size:0.82rem;color:var(--text2);">Sensor readings, power consumption, machine vibrations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🔧</span> Key Concepts in Time Series Forecasting</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="highlight">
+          <strong>Window Size / Look-back Period</strong><br>
+          How many past time steps the model uses to make its prediction. Example: Use the last 60 days of stock prices to predict the next day.
+        </div>
+        <div class="highlight amber">
+          <strong>Stationarity</strong><br>
+          A stationary series has constant mean and variance over time. Many time series methods require stationarity. Differencing (subtracting previous value) can make a series stationary.
+        </div>
+      </div>
+      <div>
+        <div class="highlight green">
+          <strong>Train/Validation/Test Split</strong><br>
+          For time series, you MUST split chronologically — not randomly! Future data cannot influence past predictions. Typically: 70% train, 10% validation, 20% test.
+        </div>
+        <div class="highlight pink">
+          <strong>Normalization</strong><br>
+          Scale data to [0,1] or [-1,1] using Min-Max scaling or Standard scaling. Essential for neural networks to train effectively on financial data.
+        </div>
+      </div>
+    </div>
+
+    <div class="formula">
+      <span class="formula-label">Min-Max Normalization Formula</span>
+      x_normalized = (x - x_min) / (x_max - x_min)   →   Result always in [0, 1]
+    </div>
+  </div>
+
+  <!-- DATA PREP PIPELINE -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🏗️</span> Data Preparation Pipeline for RNN</div>
+    <p>This is the most important (and most overlooked) part of any time series project. Here is the full pipeline:</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 1</div>
+        <div class="timeline-content"><strong>Collect Raw Data</strong> — Download historical price data (open, high, low, close, volume)</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 2</div>
+        <div class="timeline-content"><strong>Handle Missing Values</strong> — Fill gaps caused by holidays, trading halts, etc. Forward-fill is common for financial data</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 3</div>
+        <div class="timeline-content"><strong>Feature Engineering</strong> — Add technical indicators (moving averages, RSI, MACD), candlestick pattern flags</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 4</div>
+        <div class="timeline-content"><strong>Normalize/Scale</strong> — Apply Min-Max or Standard Scaler to bring all values to similar ranges</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 5</div>
+        <div class="timeline-content"><strong>Create Sliding Windows</strong> — Convert the series into (input_sequence, target) pairs using a sliding window of fixed size</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 6</div>
+        <div class="timeline-content"><strong>Chronological Split</strong> — Split into train, validation, and test sets in time order</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">STEP 7</div>
+        <div class="timeline-content"><strong>Reshape for RNN</strong> — Input shape must be <code>(samples, timesteps, features)</code></div>
+      </div>
+    </div>
+
+    <div class="num-demo" style="margin:0;">
+      <div class="num-demo-title"><span>📐</span> Sliding Window Example — Visualized</div>
+      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">Raw sequence: [100, 102, 99, 105, 108, 103, 110]. With window_size=3, we create:</p>
+      <div style="overflow-x:auto;">
+        <table class="comparison-table" style="margin:0;">
+          <thead>
+            <tr><th>Sample #</th><th>Input Sequence (X)</th><th>Target (y)</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>[100, 102, 99]</td><td>105</td><td>See 3 days → predict 4th</td></tr>
+            <tr><td>2</td><td>[102, 99, 105]</td><td>108</td><td>Slide window by 1</td></tr>
+            <tr><td>3</td><td>[99, 105, 108]</td><td>103</td><td>Keep sliding</td></tr>
+            <tr><td>4</td><td>[105, 108, 103]</td><td>110</td><td>Last sample</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.82rem;color:var(--text3);margin-top:0.75rem;">RNN input shape: <code>(4 samples, 3 timesteps, 1 feature)</code> → Target shape: <code>(4,)</code></p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 5: STOCK PROJECT
+     =========================== -->
+<section class="section" id="stock">
+  <div class="section-header">
+    <span class="section-num">05 // PROJECT</span>
+    <h2 class="section-title">Stock Market Fund Analysis</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="icon">💹</span> Project Goal: Should You Invest?</div>
+    <p>
+      We will build an LSTM model that analyzes <strong>candlestick patterns</strong> in stock price data to detect bullish or bearish trends and predict whether a fund is worth investing in. The model learns:
+    </p>
+    <ul class="styled-list">
+      <li>Price momentum (is the stock trending up or down?)</li>
+      <li>Candlestick pattern recognition (Doji, Hammer, Engulfing, etc.)</li>
+      <li>Volatility patterns (high-low range trends)</li>
+      <li>Volume patterns (is buying or selling volume increasing?)</li>
+    </ul>
+  </div>
+
+  <!-- CANDLESTICK EXPLAINER -->
+  <div class="panel">
+    <div class="panel-title"><span class="icon">🕯️</span> Understanding Candlestick Charts</div>
+    <p>A <strong>candlestick</strong> is a way to represent price movement in a given time period (e.g., one day). Each candle has four key values: <strong>Open, High, Low, Close (OHLC)</strong>.</p>
+
+    <div class="grid-2">
+      <div>
+        <svg width="100%" height="200" viewBox="0 0 300 200">
+          <!-- Bullish candle -->
+          <text x="60" y="25" text-anchor="middle" fill="#7a9ab5" font-size="10">Bullish Candle</text>
+          <text x="60" y="38" text-anchor="middle" fill="#7a9ab5" font-size="8">(Close > Open)</text>
+          <!-- wick -->
+          <line x1="60" y1="45" x2="60" y2="65" stroke="#00ff9d" stroke-width="2"/>
+          <line x1="60" y1="115" x2="60" y2="145" stroke="#00ff9d" stroke-width="2"/>
+          <!-- body -->
+          <rect x="42" y="65" width="36" height="50" fill="#00ff9d" rx="1"/>
+          <!-- labels -->
+          <text x="105" y="50" fill="#00ff9d" font-size="9">High = 110</text>
+          <text x="105" y="70" fill="#7a9ab5" font-size="9">Close = 105</text>
+          <text x="105" y="115" fill="#7a9ab5" font-size="9">Open = 98</text>
+          <text x="105" y="148" fill="#00ff9d" font-size="9">Low = 92</text>
+          <line x1="100" y1="48" x2="75" y2="48" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="68" x2="78" y2="68" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="113" x2="78" y2="113" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="145" x2="75" y2="145" stroke="#7a9ab5" stroke-width="0.5"/>
+          <!-- annotation -->
+          <text x="60" y="180" text-anchor="middle" fill="#00ff9d" font-size="9">Green = Price ROSE today</text>
+        </svg>
+      </div>
+      <div>
+        <svg width="100%" height="200" viewBox="0 0 300 200">
+          <!-- Bearish candle -->
+          <text x="60" y="25" text-anchor="middle" fill="#7a9ab5" font-size="10">Bearish Candle</text>
+          <text x="60" y="38" text-anchor="middle" fill="#7a9ab5" font-size="8">(Close &lt; Open)</text>
+          <!-- wick -->
+          <line x1="60" y1="45" x2="60" y2="65" stroke="#ff4d4d" stroke-width="2"/>
+          <line x1="60" y1="115" x2="60" y2="145" stroke="#ff4d4d" stroke-width="2"/>
+          <!-- body -->
+          <rect x="42" y="65" width="36" height="50" fill="#ff4d4d" rx="1"/>
+          <!-- labels -->
+          <text x="105" y="50" fill="#ff4d4d" font-size="9">High = 108</text>
+          <text x="105" y="70" fill="#7a9ab5" font-size="9">Open = 104</text>
+          <text x="105" y="115" fill="#7a9ab5" font-size="9">Close = 94</text>
+          <text x="105" y="148" fill="#ff4d4d" font-size="9">Low = 89</text>
+          <line x1="100" y1="48" x2="75" y2="48" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="68" x2="78" y2="68" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="113" x2="78" y2="113" stroke="#7a9ab5" stroke-width="0.5"/>
+          <line x1="100" y1="145" x2="75" y2="145" stroke="#7a9ab5" stroke-width="0.5"/>
+          <text x="60" y="180" text-anchor="middle" fill="#ff4d4d" font-size="9">Red = Price FELL today</text>
+        </svg>
+      </div>
+    </div>
+
+    <p>Our LSTM model will process a <strong>sequence of candlesticks</strong> (e.g., 60 trading days) and learn to identify patterns like:</p>
+    <div class="grid-3">
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:0.75rem;font-size:0.82rem;">
+        <div style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:0.7rem;margin-bottom:0.3rem;">BULLISH SIGNALS</div>
+        Consecutive green candles, higher lows, increasing volume
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:0.75rem;font-size:0.82rem;">
+        <div style="color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:0.7rem;margin-bottom:0.3rem;">BEARISH SIGNALS</div>
+        Consecutive red candles, lower highs, decreasing volume on rallies
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border2);padding:0.75rem;font-size:0.82rem;">
+        <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:0.7rem;margin-bottom:0.3rem;">REVERSAL SIGNALS</div>
+        Doji patterns, hammer candles, shooting stars, engulfing patterns
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE STOCK DEMO -->
+  <div id="stock-demo">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--amber);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.75rem;">
+      Interactive: LSTM Pattern Detector
+    </div>
+    <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">Generate a candlestick pattern and let the simulated LSTM analyze whether you should invest:</p>
+
+    <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <button class="btn primary" onclick="generateBullish()">Generate Bullish Pattern 📈</button>
+      <button class="btn" onclick="generateBearish()" style="border-color:#ff6b6b;color:#ff6b6b;">Generate Bearish Pattern 📉</button>
+      <button class="btn" onclick="generateMixed()">Generate Mixed Pattern ↕️</button>
+    </div>
+
+    <canvas id="candleChart" width="800" height="160" style="width:100%;border:1px solid var(--border2);background:var(--bg);display:block;"></canvas>
+
+    <div class="stock-display" id="stock-result" style="display:none;">
+      <div class="signal-box" id="signal-box">
+        <div class="signal-label" id="signal-label">—</div>
+        <div class="signal-sub" id="signal-sub">ANALYZING...</div>
+      </div>
+      <div>
+        <div class="confidence-bar-wrap">
+          <div class="confidence-label">
+            <span>Model Confidence — Bullish</span>
+            <span id="conf-bull-val">0%</span>
+          </div>
+          <div class="confidence-bar"><div class="confidence-fill" id="conf-bull" style="width:0%"></div></div>
+
+          <div class="confidence-label">
+            <span>Model Confidence — Bearish</span>
+            <span id="conf-bear-val">0%</span>
+          </div>
+          <div class="confidence-bar"><div class="confidence-fill" id="conf-bear" style="width:0%;background:linear-gradient(90deg,#ff6b6b,#ff4d4d)"></div></div>
+
+          <div class="confidence-label">
+            <span>Volatility Risk</span>
+            <span id="conf-risk-val">0%</span>
+          </div>
+          <div class="confidence-bar"><div class="confidence-fill" id="conf-risk" style="width:0%;background:linear-gradient(90deg,var(--amber),var(--pink))"></div></div>
+        </div>
+        <div id="invest-advice" style="margin-top:1rem;font-size:0.85rem;color:var(--text2);border:1px solid var(--border2);padding:0.75rem;"></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ===========================
+     SECTION 6: CODE LAB
+     =========================== -->
+<section class="section" id="code">
+  <div class="section-header">
+    <span class="section-num">06 // IMPLEMENTATION</span>
+    <h2 class="section-title">Code Lab: From Scratch to Stock Predictor</h2>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-basic', this)">Basic RNN</button>
+    <button class="tab-btn" onclick="switchTab('tab-lstm', this)">LSTM Model</button>
+    <button class="tab-btn" onclick="switchTab('tab-gru', this)">GRU Model</button>
+    <button class="tab-btn" onclick="switchTab('tab-stock', this)">Stock Predictor</button>
+    <button class="tab-btn" onclick="switchTab('tab-full', this)">Full Pipeline</button>
+    <button class="tab-btn" onclick="switchTab('tab-keras', this)">Keras Built-ins ✨</button>
+  </div>
+
+  <!-- TAB 1: BASIC RNN -->
+  <div class="tab-content active" id="tab-basic">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🔵</span> Building a Vanilla RNN from Scratch (NumPy)</div>
+      <p>Before using frameworks, let's implement a tiny RNN by hand to understand exactly what happens inside. This uses only NumPy (Python's numerical computing library) — no deep learning framework needed.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — Vanilla RNN from scratch (NumPy)</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# VANILLA RNN — MANUAL IMPLEMENTATION
+# Understanding what happens inside before using Keras/PyTorch
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cl">VanillaRNN</span>:
+    <span class="st">"""
+    A simple Recurrent Neural Network built from scratch.
+    
+    Architecture:
+      - Input size:   input_size  (number of features per time step)
+      - Hidden size:  hidden_size (size of the memory/hidden state)
+      - Output size:  output_size (number of values to predict)
+    """</span>
+    
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, input_size, hidden_size, output_size):
+        self.hidden_size = hidden_size
+        
+        <span class="cm"># Initialize weights with small random values (Xavier initialization)</span>
+        scale = np.sqrt(<span class="nm">2.0</span> / (input_size + hidden_size))
+        
+        <span class="cm"># Weight matrix for input → hidden (shape: hidden_size × input_size)</span>
+        self.Wx = np.random.randn(hidden_size, input_size) * scale
+        
+        <span class="cm"># Weight matrix for hidden → hidden (shape: hidden_size × hidden_size)</span>
+        self.Wh = np.random.randn(hidden_size, hidden_size) * scale
+        
+        <span class="cm"># Bias for hidden layer (shape: hidden_size × 1)</span>
+        self.bh = np.zeros((hidden_size, <span class="nm">1</span>))
+        
+        <span class="cm"># Weight matrix for hidden → output (shape: output_size × hidden_size)</span>
+        self.Wy = np.random.randn(output_size, hidden_size) * scale
+        
+        <span class="cm"># Bias for output layer (shape: output_size × 1)</span>
+        self.by = np.zeros((output_size, <span class="nm">1</span>))
+    
+    <span class="kw">def</span> <span class="fn">tanh</span>(self, x):
+        <span class="st">"""Hyperbolic tangent — squishes values to range [-1, 1]"""</span>
+        <span class="kw">return</span> np.tanh(x)
+    
+    <span class="kw">def</span> <span class="fn">forward</span>(self, inputs):
+        <span class="st">"""
+        Forward pass through the sequence.
+        
+        inputs: list of column vectors, each shape (input_size, 1)
+        Returns: list of outputs, final hidden state
+        """</span>
+        <span class="cm"># Start with zero hidden state (no memory at the beginning)</span>
+        h_prev = np.zeros((self.hidden_size, <span class="nm">1</span>))
+        
+        outputs = []
+        self.hidden_states = [h_prev]  <span class="cm"># Store for backprop</span>
+        self.inputs_cache = inputs      <span class="cm"># Store for backprop</span>
+        
+        <span class="kw">for</span> x_t <span class="kw">in</span> inputs:
+            <span class="cm"># ── CORE RNN EQUATION ──────────────────────────────────────
+            # New hidden state = tanh(Wx * current_input + Wh * prev_hidden + bias)
+            # This is where the "recurrence" happens!</span>
+            h_t = self.tanh(
+                self.Wx @ x_t +    <span class="cm"># Current input contribution</span>
+                self.Wh @ h_prev + <span class="cm"># Previous memory contribution</span>
+                self.bh            <span class="cm"># Bias</span>
+            )
+            
+            <span class="cm"># Compute output from current hidden state</span>
+            y_t = self.Wy @ h_t + self.by
+            
+            outputs.append(y_t)
+            self.hidden_states.append(h_t)
+            h_prev = h_t  <span class="cm"># Pass memory to next step</span>
+        
+        <span class="kw">return</span> outputs, h_prev
+    
+    <span class="kw">def</span> <span class="fn">predict_next</span>(self, sequence):
+        <span class="st">"""Given a sequence, predict the next value."""</span>
+        outputs, final_hidden = self.forward(sequence)
+        <span class="kw">return</span> outputs[-<span class="nm">1</span>]  <span class="cm"># Return the last output as prediction</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# DEMO: Predict next value in a sine wave sequence
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cm"># Generate a simple sequence: [0, 0.5, 0.87, 1.0, 0.87, 0.5, ...]</span>
+t = np.linspace(<span class="nm">0</span>, <span class="nm">2</span> * np.pi, <span class="nm">100</span>)
+sine_wave = np.sin(t)
+
+<span class="cm"># Create input sequences of length 5 and corresponding next values</span>
+seq_length = <span class="nm">5</span>
+sequences = []
+targets = []
+
+<span class="kw">for</span> i <span class="kw">in</span> range(len(sine_wave) - seq_length):
+    seq = [np.array([[sine_wave[i + j]]]) <span class="kw">for</span> j <span class="kw">in</span> range(seq_length)]
+    sequences.append(seq)
+    targets.append(sine_wave[i + seq_length])
+
+<span class="cm"># Create the RNN</span>
+rnn = VanillaRNN(input_size=<span class="nm">1</span>, hidden_size=<span class="nm">10</span>, output_size=<span class="nm">1</span>)
+
+<span class="cm"># Test with the first sequence (untrained — random prediction)</span>
+test_seq = sequences[<span class="nm">0</span>]
+prediction = rnn.predict_next(test_seq)
+
+print(<span class="st">f"Sequence: {[round(s[0][0], 3) for s in test_seq]}"</span>)
+print(<span class="st">f"True next value:     {round(targets[0], 4)}"</span>)
+print(<span class="st">f"RNN prediction:      {round(float(prediction[0][0]), 4)}"</span>)
+print(<span class="st">f"(Untrained — after training with backprop, it would learn the pattern)"</span>)</pre>
+    </div>
+  </div>
+
+  <!-- TAB 2: LSTM -->
+  <div class="tab-content" id="tab-lstm">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🟢</span> Building an LSTM with Keras (TensorFlow)</div>
+      <p><strong>Keras</strong> (part of TensorFlow) provides a high-level API that lets us build LSTM networks with just a few lines of code. Each <code>LSTM()</code> layer handles all the gate computations automatically.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — LSTM for Sequence Prediction (Keras)</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow <span class="kw">import</span> keras
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers
+<span class="im">from</span> sklearn.preprocessing <span class="kw">import</span> MinMaxScaler
+<span class="im">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 1: GENERATE SYNTHETIC SEQUENCE DATA
+# (In real use, you would load actual data here)
+# ─────────────────────────────────────────────────────────────────</span>
+
+np.random.seed(<span class="nm">42</span>)
+
+<span class="cm"># Simulate a noisy sine wave (like a trending financial series)</span>
+t = np.linspace(<span class="nm">0</span>, <span class="nm">50</span>, <span class="nm">500</span>)
+data = np.sin(<span class="nm">0.5</span> * t) + <span class="nm">0.1</span> * np.random.randn(<span class="nm">500</span>)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 2: NORMALIZE DATA
+# MinMaxScaler scales values to range [0, 1]
+# IMPORTANT: Fit ONLY on training data to prevent data leakage
+# ─────────────────────────────────────────────────────────────────</span>
+
+scaler = MinMaxScaler(feature_range=(<span class="nm">0</span>, <span class="nm">1</span>))
+data_scaled = scaler.fit_transform(data.reshape(-<span class="nm">1</span>, <span class="nm">1</span>))
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 3: CREATE SLIDING WINDOW SEQUENCES
+# window_size = how many past steps the LSTM sees to make a prediction
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">create_sequences</span>(data, window_size):
+    <span class="st">"""
+    Convert a 1D time series into (input_sequence, target) pairs.
+    
+    Example with window_size=3, data=[1,2,3,4,5]:
+      → ([1,2,3], 4), ([2,3,4], 5)
+    """</span>
+    X, y = [], []
+    <span class="kw">for</span> i <span class="kw">in</span> range(len(data) - window_size):
+        X.append(data[i : i + window_size])
+        y.append(data[i + window_size])
+    <span class="kw">return</span> np.array(X), np.array(y)
+
+WINDOW_SIZE = <span class="nm">30</span>  <span class="cm"># Use 30 past steps to predict next step</span>
+X, y = create_sequences(data_scaled, WINDOW_SIZE)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 4: TRAIN/TEST SPLIT — MUST BE CHRONOLOGICAL
+# 80% for training, 20% for testing
+# ─────────────────────────────────────────────────────────────────</span>
+
+split_idx = <span class="nm">int</span>(len(X) * <span class="nm">0.8</span>)
+X_train, X_test = X[:split_idx], X[split_idx:]
+y_train, y_test = y[:split_idx], y[split_idx:]
+
+<span class="cm"># X shape: (samples, window_size, 1) — RNN needs 3D input
+# The 3 dimensions are: (batch_size, timesteps, features)</span>
+X_train = X_train.reshape((X_train.shape[<span class="nm">0</span>], WINDOW_SIZE, <span class="nm">1</span>))
+X_test  = X_test.reshape((X_test.shape[<span class="nm">0</span>],  WINDOW_SIZE, <span class="nm">1</span>))
+
+print(<span class="st">f"Training samples:  {X_train.shape[0]}"</span>)
+print(<span class="st">f"Test samples:      {X_test.shape[0]}"</span>)
+print(<span class="st">f"Input shape:       {X_train.shape}  (samples, timesteps, features)"</span>)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 5: BUILD THE LSTM MODEL
+# Architecture: 2 LSTM layers + Dense output layer
+# ─────────────────────────────────────────────────────────────────</span>
+
+model = keras.Sequential([
+    <span class="cm"># LAYER 1: First LSTM layer
+    # units=64 means 64 LSTM cells (each has all 4 gates)
+    # return_sequences=True means output at every timestep (needed for stacking)</span>
+    layers.LSTM(
+        units=<span class="nm">64</span>,
+        return_sequences=<span class="kw">True</span>,
+        input_shape=(WINDOW_SIZE, <span class="nm">1</span>)  <span class="cm"># (timesteps, features)</span>
+    ),
+    
+    <span class="cm"># Dropout: randomly set 20% of neurons to 0 during training
+    # This prevents overfitting (memorizing training data)</span>
+    layers.Dropout(<span class="nm">0.2</span>),
+    
+    <span class="cm"># LAYER 2: Second LSTM layer
+    # return_sequences=False means only output at the LAST timestep</span>
+    layers.LSTM(
+        units=<span class="nm">32</span>,
+        return_sequences=<span class="kw">False</span>
+    ),
+    
+    layers.Dropout(<span class="nm">0.2</span>),
+    
+    <span class="cm"># OUTPUT LAYER: Dense layer with 1 neuron = predict single value</span>
+    layers.Dense(units=<span class="nm">1</span>)
+])
+
+model.summary()  <span class="cm"># Print architecture overview</span>
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 6: COMPILE AND TRAIN
+# Adam optimizer: an adaptive learning rate optimizer
+# MSE (Mean Squared Error): loss function for regression
+# ─────────────────────────────────────────────────────────────────</span>
+
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=<span class="nm">0.001</span>),
+    loss=<span class="st">'mean_squared_error'</span>
+)
+
+<span class="cm"># EarlyStopping: stop training if validation loss stops improving
+# This prevents wasting time and overfitting</span>
+early_stop = keras.callbacks.EarlyStopping(
+    monitor=<span class="st">'val_loss'</span>,
+    patience=<span class="nm">10</span>,    <span class="cm"># Stop after 10 epochs of no improvement</span>
+    restore_best_weights=<span class="kw">True</span>
+)
+
+history = model.fit(
+    X_train, y_train,
+    epochs=<span class="nm">100</span>,
+    batch_size=<span class="nm">32</span>,
+    validation_split=<span class="nm">0.1</span>,
+    callbacks=[early_stop],
+    verbose=<span class="nm">1</span>
+)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# STEP 7: EVALUATE AND PREDICT
+# ─────────────────────────────────────────────────────────────────</span>
+
+predictions_scaled = model.predict(X_test)
+
+<span class="cm"># Inverse transform: convert scaled values back to original scale</span>
+predictions = scaler.inverse_transform(predictions_scaled)
+y_test_actual = scaler.inverse_transform(y_test.reshape(-<span class="nm">1</span>, <span class="nm">1</span>))
+
+<span class="cm"># Calculate Root Mean Squared Error (RMSE)</span>
+rmse = np.sqrt(np.mean((predictions - y_test_actual) ** <span class="nm">2</span>))
+print(<span class="st">f"\nTest RMSE: {rmse:.4f}"</span>)
+
+<span class="cm"># Plot results</span>
+plt.figure(figsize=(<span class="nm">14</span>, <span class="nm">5</span>))
+plt.plot(y_test_actual, label=<span class="st">'Actual Values'</span>, color=<span class="st">'#00e5ff'</span>, linewidth=<span class="nm">1.5</span>)
+plt.plot(predictions, label=<span class="st">'LSTM Predictions'</span>, color=<span class="st">'#00ff9d'</span>, linewidth=<span class="nm">1.5</span>, linestyle=<span class="st">'--'</span>)
+plt.title(<span class="st">'LSTM Sequence Prediction'</span>)
+plt.legend()
+plt.tight_layout()
+plt.savefig(<span class="st">'lstm_prediction.png'</span>, dpi=<span class="nm">150</span>)
+plt.show()</pre>
+    </div>
+  </div>
+
+  <!-- TAB 3: GRU -->
+  <div class="tab-content" id="tab-gru">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🟡</span> GRU Implementation — Faster Alternative to LSTM</div>
+      <p>GRU is nearly identical to use in code — just replace <code>LSTM()</code> with <code>GRU()</code>. The architecture inside is different (fewer gates), but the API is the same.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — GRU Model (Keras)</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow <span class="kw">import</span> keras
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers
+<span class="im">from</span> sklearn.preprocessing <span class="kw">import</span> MinMaxScaler
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# GRU MODEL — same data pipeline as LSTM, just different layer type
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cm"># (Assume X_train, X_test, y_train, y_test are already prepared
+#  using the same create_sequences and scaling from the LSTM example)</span>
+
+WINDOW_SIZE = <span class="nm">30</span>
+
+gru_model = keras.Sequential([
+    <span class="cm"># GRU Layer 1: 64 units, return sequences for stacking</span>
+    layers.GRU(
+        units=<span class="nm">64</span>,
+        return_sequences=<span class="kw">True</span>,
+        input_shape=(WINDOW_SIZE, <span class="nm">1</span>)
+    ),
+    layers.Dropout(<span class="nm">0.2</span>),
+    
+    <span class="cm"># GRU Layer 2: 32 units, only return final output</span>
+    layers.GRU(
+        units=<span class="nm">32</span>,
+        return_sequences=<span class="kw">False</span>
+    ),
+    layers.Dropout(<span class="nm">0.2</span>),
+    
+    <span class="cm"># Output: single value prediction</span>
+    layers.Dense(<span class="nm">1</span>)
+])
+
+gru_model.compile(
+    optimizer=<span class="st">'adam'</span>,
+    loss=<span class="st">'mean_squared_error'</span>
+)
+
+gru_model.summary()
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# COMPARE PARAMETER COUNT
+# GRU has fewer parameters than LSTM = faster training
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">count_parameters</span>(model):
+    <span class="kw">return</span> sum(np.prod(v.shape) <span class="kw">for</span> v <span class="kw">in</span> model.trainable_variables)
+
+print(<span class="st">f"\nGRU total parameters: {count_parameters(gru_model):,}"</span>)
+
+<span class="cm"># For reference, LSTM equivalent has ~25% more parameters:
+# LSTM(64) has 4 gates × (64+1+64) × 64 = ~33,000 params
+# GRU(64)  has 3 gates × (64+1+64) × 64 = ~24,000 params</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# BIDIRECTIONAL GRU — reads sequence in BOTH directions
+# Useful when you have access to the full sequence (not real-time)
+# ─────────────────────────────────────────────────────────────────</span>
+
+bidirectional_gru = keras.Sequential([
+    <span class="cm"># Bidirectional wrapper: runs GRU forward AND backward
+    # Doubles the output size (concatenates both directions)</span>
+    layers.Bidirectional(
+        layers.GRU(units=<span class="nm">32</span>, return_sequences=<span class="kw">True</span>),
+        input_shape=(WINDOW_SIZE, <span class="nm">1</span>)
+    ),
+    layers.Bidirectional(
+        layers.GRU(units=<span class="nm">16</span>, return_sequences=<span class="kw">False</span>)
+    ),
+    layers.Dense(<span class="nm">1</span>)
+])
+
+bidirectional_gru.compile(optimizer=<span class="st">'adam'</span>, loss=<span class="st">'mse'</span>)
+print(<span class="st">f"Bidirectional GRU parameters: {count_parameters(bidirectional_gru):,}"</span>)</pre>
+    </div>
+  </div>
+
+  <!-- TAB 4: STOCK PREDICTOR -->
+  <div class="tab-content" id="tab-stock">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">💹</span> Full Stock Market Fund Analyzer</div>
+      <p>This is the complete project code. It downloads real stock data, engineers candlestick features, builds an LSTM model, and outputs a BUY / SELL / HOLD recommendation.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — Stock Fund Investment Analyzer (OHLCV + LSTM)</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="cm"># ─────────────────────────────────────────────────────────────────
+# STOCK FUND INVESTMENT ANALYZER
+# Uses LSTM to detect candlestick patterns and predict investment signal
+#
+# Install dependencies:
+#   pip install yfinance tensorflow scikit-learn pandas numpy matplotlib
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">import</span> pandas <span class="kw">as</span> pd
+<span class="im">import</span> yfinance <span class="kw">as</span> yf
+<span class="im">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="im">from</span> sklearn.preprocessing <span class="kw">import</span> MinMaxScaler
+<span class="im">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, classification_report
+<span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers, models, callbacks
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION A: DATA COLLECTION
+# Download 3 years of daily OHLCV data for a stock/ETF
+# OHLCV = Open, High, Low, Close, Volume
+# ═══════════════════════════════════════════════════════════════</span>
+
+TICKER = <span class="st">"SPY"</span>    <span class="cm"># S&P 500 ETF — a popular index fund</span>
+PERIOD = <span class="st">"3y"</span>     <span class="cm"># 3 years of daily data</span>
+WINDOW = <span class="nm">60</span>       <span class="cm"># Look at 60 trading days (~3 months) to make prediction</span>
+
+print(<span class="st">f"Downloading {TICKER} data..."</span>)
+df = yf.download(TICKER, period=PERIOD, interval=<span class="st">"1d"</span>)
+
+<span class="cm"># Handle MultiIndex columns from yfinance (if any)</span>
+<span class="kw">if</span> isinstance(df.columns, pd.MultiIndex):
+    df.columns = df.columns.get_level_values(<span class="nm">0</span>)
+
+df = df.dropna()
+print(<span class="st">f"Loaded {len(df)} trading days of data"</span>)
+print(df.tail())
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION B: FEATURE ENGINEERING
+# Create candlestick-based features that encode pattern information
+# ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">def</span> <span class="fn">engineer_features</span>(df):
+    <span class="st">"""
+    Create features from OHLCV candlestick data.
+    Each feature captures a different aspect of price behavior.
+    """</span>
+    features = pd.DataFrame(index=df.index)
+    
+    <span class="cm"># ── Price-based features ────────────────────────────────────</span>
+    
+    <span class="cm"># Body size: How large is the candle body? (Close - Open)
+    # Positive = bullish (green) candle, Negative = bearish (red)</span>
+    features[<span class="st">'body'</span>] = df[<span class="st">'Close'</span>] - df[<span class="st">'Open'</span>]
+    
+    <span class="cm"># Body ratio: Body size as % of the full candle range (High-Low)
+    # High value = strong directional day, Low = indecision (Doji)</span>
+    features[<span class="st">'body_ratio'</span>] = np.abs(features[<span class="st">'body'</span>]) / (df[<span class="st">'High'</span>] - df[<span class="st">'Low'</span>] + <span class="nm">1e-8</span>)
+    
+    <span class="cm"># Upper shadow: Distance from body top to High
+    # Long upper shadow = selling pressure at high prices</span>
+    features[<span class="st">'upper_shadow'</span>] = df[<span class="st">'High'</span>] - df[[<span class="st">'Open'</span>, <span class="st">'Close'</span>]].max(axis=<span class="nm">1</span>)
+    
+    <span class="cm"># Lower shadow: Distance from Low to body bottom
+    # Long lower shadow = buying support at low prices (bullish)</span>
+    features[<span class="st">'lower_shadow'</span>] = df[[<span class="st">'Open'</span>, <span class="st">'Close'</span>]].min(axis=<span class="nm">1</span>) - df[<span class="st">'Low'</span>]
+    
+    <span class="cm"># Daily return: % change from previous close to today's close</span>
+    features[<span class="st">'return'</span>] = df[<span class="st">'Close'</span>].pct_change()
+    
+    <span class="cm"># ── Trend features ──────────────────────────────────────────</span>
+    
+    <span class="cm"># Simple Moving Average ratio: Is price above its 20-day average?
+    # Price / SMA20 > 1 means uptrend, < 1 means downtrend</span>
+    features[<span class="st">'sma20_ratio'</span>] = df[<span class="st">'Close'</span>] / df[<span class="st">'Close'</span>].rolling(<span class="nm">20</span>).mean()
+    
+    <span class="cm"># Exponential Moving Average ratio (faster-responding than SMA)</span>
+    features[<span class="st">'ema10_ratio'</span>] = df[<span class="st">'Close'</span>] / df[<span class="st">'Close'</span>].ewm(span=<span class="nm">10</span>).mean()
+    
+    <span class="cm"># ── Volatility features ─────────────────────────────────────</span>
+    
+    <span class="cm"># Average True Range (ATR): Measures market volatility
+    # High ATR = big swings, risky. Low ATR = calm market</span>
+    high_low = df[<span class="st">'High'</span>] - df[<span class="st">'Low'</span>]
+    features[<span class="st">'atr'</span>] = high_low.rolling(<span class="nm">14</span>).mean()
+    
+    <span class="cm"># Rolling standard deviation of returns (20-day volatility)</span>
+    features[<span class="st">'volatility'</span>] = features[<span class="st">'return'</span>].rolling(<span class="nm">20</span>).std()
+    
+    <span class="cm"># ── Volume features ─────────────────────────────────────────</span>
+    
+    <span class="cm"># Volume relative to its 20-day average
+    # > 1 = higher than usual volume (significant move confirmation)</span>
+    features[<span class="st">'volume_ratio'</span>] = df[<span class="st">'Volume'</span>] / df[<span class="st">'Volume'</span>].rolling(<span class="nm">20</span>).mean()
+    
+    <span class="cm"># Close price (normalized separately)</span>
+    features[<span class="st">'close'</span>] = df[<span class="st">'Close'</span>]
+    
+    features = features.dropna()
+    <span class="kw">return</span> features
+
+features_df = engineer_features(df)
+print(<span class="st">f"\nFeatures shape: {features_df.shape}"</span>)
+print(<span class="st">f"Features: {list(features_df.columns)}"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION C: CREATE LABELS (What to predict)
+# Label = 1 if price is HIGHER 10 trading days from now (BUY signal)
+#       = 0 if price is LOWER  10 trading days from now (SELL signal)
+# ═══════════════════════════════════════════════════════════════</span>
+
+FORECAST_HORIZON = <span class="nm">10</span>  <span class="cm"># Predict 10 days ahead</span>
+
+aligned_df = df.loc[features_df.index]
+future_returns = aligned_df[<span class="st">'Close'</span>].shift(-FORECAST_HORIZON) / aligned_df[<span class="st">'Close'</span>] - <span class="nm">1</span>
+
+<span class="cm"># BUY if future return > 1% (meaningful upside), SELL otherwise</span>
+labels = (future_returns > <span class="nm">0.01</span>).astype(int)
+labels = labels.iloc[:-FORECAST_HORIZON]
+features_df = features_df.iloc[:-FORECAST_HORIZON]
+
+print(<span class="st">f"\nBUY signals:  {labels.sum()} ({labels.mean()*100:.1f}%)"</span>)
+print(<span class="st">f"SELL signals: {(labels==0).sum()} ({(1-labels.mean())*100:.1f}%)"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION D: NORMALIZE FEATURES
+# Scale each feature to [0, 1] — critical for neural network training
+# ═══════════════════════════════════════════════════════════════</span>
+
+feature_cols = [c <span class="kw">for</span> c <span class="kw">in</span> features_df.columns <span class="kw">if</span> c != <span class="st">'close'</span>]
+scaler = MinMaxScaler()
+features_scaled = scaler.fit_transform(features_df[feature_cols])
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION E: CREATE SEQUENCES
+# Each input X is a window of 60 trading days with 10 features each
+# Each label y is 0 (SELL) or 1 (BUY)
+# ═══════════════════════════════════════════════════════════════</span>
+
+X, y = [], []
+<span class="kw">for</span> i <span class="kw">in</span> range(WINDOW, len(features_scaled)):
+    X.append(features_scaled[i - WINDOW : i])
+    y.append(labels.values[i])
+
+X = np.array(X)
+y = np.array(y)
+
+print(<span class="st">f"\nInput shape X: {X.shape}  (samples, timesteps=60, features=10)"</span>)
+print(<span class="st">f"Label shape y: {y.shape}"</span>)
+
+<span class="cm"># Chronological split — NO random shuffling!</span>
+split = <span class="nm">int</span>(len(X) * <span class="nm">0.8</span>)
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION F: BUILD THE LSTM CLASSIFIER
+# ═══════════════════════════════════════════════════════════════</span>
+
+model = models.Sequential([
+    <span class="cm"># First LSTM layer with 128 units
+    # return_sequences=True needed because we stack another LSTM on top</span>
+    layers.LSTM(
+        units=<span class="nm">128</span>,
+        return_sequences=<span class="kw">True</span>,
+        input_shape=(WINDOW, len(feature_cols))
+    ),
+    layers.Dropout(<span class="nm">0.3</span>),
+    
+    <span class="cm"># Second LSTM layer — processes the sequence output of first layer</span>
+    layers.LSTM(units=<span class="nm">64</span>, return_sequences=<span class="kw">False</span>),
+    layers.Dropout(<span class="nm">0.3</span>),
+    
+    <span class="cm"># Dense hidden layer for final pattern integration</span>
+    layers.Dense(units=<span class="nm">32</span>, activation=<span class="st">'relu'</span>),
+    layers.Dropout(<span class="nm">0.2</span>),
+    
+    <span class="cm"># Output layer: sigmoid → outputs probability between 0 and 1
+    # > 0.5 = BUY signal, < 0.5 = SELL signal</span>
+    layers.Dense(units=<span class="nm">1</span>, activation=<span class="st">'sigmoid'</span>)
+])
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=<span class="nm">0.0005</span>),
+    loss=<span class="st">'binary_crossentropy'</span>,  <span class="cm"># Binary: BUY or SELL</span>
+    metrics=[<span class="st">'accuracy'</span>]
+)
+
+model.summary()
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION G: TRAIN
+# ═══════════════════════════════════════════════════════════════</span>
+
+early_stop = callbacks.EarlyStopping(
+    monitor=<span class="st">'val_accuracy'</span>, patience=<span class="nm">15</span>, restore_best_weights=<span class="kw">True</span>
+)
+reduce_lr = callbacks.ReduceLROnPlateau(
+    monitor=<span class="st">'val_loss'</span>, factor=<span class="nm">0.5</span>, patience=<span class="nm">5</span>
+)
+
+history = model.fit(
+    X_train, y_train,
+    epochs=<span class="nm">100</span>,
+    batch_size=<span class="nm">64</span>,
+    validation_split=<span class="nm">0.15</span>,
+    callbacks=[early_stop, reduce_lr],
+    verbose=<span class="nm">1</span>
+)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════════
+# SECTION H: EVALUATE AND GENERATE INVESTMENT SIGNAL
+# ═══════════════════════════════════════════════════════════════</span>
+
+y_pred_prob = model.predict(X_test)
+y_pred = (y_pred_prob > <span class="nm">0.5</span>).astype(int).flatten()
+
+print(<span class="st">"\n══════════════════════════════════"</span>)
+print(<span class="st">"  INVESTMENT SIGNAL REPORT"</span>)
+print(<span class="st">"══════════════════════════════════"</span>)
+print(classification_report(y_test, y_pred, target_names=[<span class="st">'SELL'</span>, <span class="st">'BUY'</span>]))
+
+<span class="cm"># Predict on the MOST RECENT window (latest 60 days)</span>
+latest_window = features_scaled[-WINDOW:].reshape(<span class="nm">1</span>, WINDOW, len(feature_cols))
+signal_prob = model.predict(latest_window)[<span class="nm">0</span>][<span class="nm">0</span>]
+
+print(<span class="st">f"\nLatest signal probability: {signal_prob:.4f}"</span>)
+
+<span class="kw">if</span> signal_prob > <span class="nm">0.65</span>:
+    print(<span class="st">f"🟢 STRONG BUY — Model confidence: {signal_prob*100:.1f}%"</span>)
+    print(<span class="st">f"   Pattern suggests bullish momentum in next {FORECAST_HORIZON} days"</span>)
+<span class="kw">elif</span> signal_prob > <span class="nm">0.5</span>:
+    print(<span class="st">f"🟡 WEAK BUY  — Model confidence: {signal_prob*100:.1f}%"</span>)
+    print(<span class="st">f"   Slight bullish lean, consider entering cautiously"</span>)
+<span class="kw">elif</span> signal_prob > <span class="nm">0.35</span>:
+    print(<span class="st">f"⚪ HOLD      — Model confidence: {(1-signal_prob)*100:.1f}%"</span>)
+    print(<span class="st">f"   No clear directional signal, stay on sidelines"</span>)
+<span class="kw">else</span>:
+    print(<span class="st">f"🔴 SELL      — Bearish confidence: {(1-signal_prob)*100:.1f}%"</span>)
+    print(<span class="st">f"   Pattern suggests downward pressure in next {FORECAST_HORIZON} days"</span>)
+
+print(<span class="st">"\n⚠️  DISCLAIMER: This is for educational purposes only."</span>)
+print(<span class="st">"    Never make real investment decisions based solely on ML models."</span>)
+print(<span class="st">"    Always consult a certified financial advisor."</span>)</pre>
+    </div>
+  </div>
+
+  <!-- TAB 5: FULL PIPELINE -->
+  <div class="tab-content" id="tab-full">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🏗️</span> Complete Reusable Pipeline Class</div>
+      <p>This wraps everything into a clean, reusable Python class that you can use as a starting point for any time series project.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — Reusable RNN Time Series Pipeline</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers, models, callbacks
+<span class="im">from</span> sklearn.preprocessing <span class="kw">import</span> MinMaxScaler
+<span class="im">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, mean_absolute_error
+
+<span class="kw">class</span> <span class="cl">TimeSeriesRNN</span>:
+    <span class="st">"""
+    A complete, reusable pipeline for time series forecasting.
+    
+    Supports: 'lstm', 'gru', or 'rnn' as model_type.
+    
+    Usage:
+        pipeline = TimeSeriesRNN(model_type='lstm', window=30)
+        pipeline.fit(time_series_array)
+        predictions = pipeline.predict(n_steps=10)
+    """</span>
+    
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, model_type=<span class="st">'lstm'</span>, window=<span class="nm">30</span>, 
+                 units=[<span class="nm">64</span>, <span class="nm">32</span>], dropout=<span class="nm">0.2</span>):
+        self.model_type = model_type
+        self.window = window
+        self.units = units
+        self.dropout = dropout
+        self.scaler = MinMaxScaler(feature_range=(<span class="nm">0</span>, <span class="nm">1</span>))
+        self.model = <span class="kw">None</span>
+        self.is_fitted = <span class="kw">False</span>
+    
+    <span class="kw">def</span> <span class="fn">_build_model</span>(self, n_features=<span class="nm">1</span>):
+        <span class="st">"""Build the recurrent model based on chosen type."""</span>
+        
+        <span class="cm"># Select the recurrent layer class based on model_type</span>
+        layer_map = {
+            <span class="st">'lstm'</span>: layers.LSTM,
+            <span class="st">'gru'</span>:  layers.GRU,
+            <span class="st">'rnn'</span>:  layers.SimpleRNN
+        }
+        RecurrentLayer = layer_map[self.model_type]
+        
+        model_layers = [
+            <span class="cm"># Input shape: (timesteps, features)</span>
+            RecurrentLayer(
+                self.units[<span class="nm">0</span>],
+                return_sequences=len(self.units) > <span class="nm">1</span>,
+                input_shape=(self.window, n_features)
+            ),
+            layers.Dropout(self.dropout)
+        ]
+        
+        <span class="cm"># Stack additional recurrent layers if provided</span>
+        <span class="kw">for</span> i, unit_count <span class="kw">in</span> enumerate(self.units[<span class="nm">1</span>:], <span class="nm">1</span>):
+            is_last = (i == len(self.units) - <span class="nm">1</span>)
+            model_layers.append(
+                RecurrentLayer(unit_count, return_sequences=<span class="kw">not</span> is_last)
+            )
+            model_layers.append(layers.Dropout(self.dropout))
+        
+        model_layers.append(layers.Dense(<span class="nm">1</span>))
+        
+        self.model = models.Sequential(model_layers)
+        self.model.compile(optimizer=<span class="st">'adam'</span>, loss=<span class="st">'mse'</span>)
+        <span class="kw">return</span> self.model
+    
+    <span class="kw">def</span> <span class="fn">fit</span>(self, data, epochs=<span class="nm">50</span>, batch_size=<span class="nm">32</span>, verbose=<span class="nm">1</span>):
+        <span class="st">"""Prepare data and train the model."""</span>
+        data = np.array(data).reshape(-<span class="nm">1</span>, <span class="nm">1</span>)
+        
+        <span class="cm"># Scale data to [0, 1]</span>
+        data_scaled = self.scaler.fit_transform(data)
+        
+        <span class="cm"># Create sliding window sequences</span>
+        X, y = [], []
+        <span class="kw">for</span> i <span class="kw">in</span> range(len(data_scaled) - self.window):
+            X.append(data_scaled[i:i + self.window])
+            y.append(data_scaled[i + self.window])
+        
+        X = np.array(X)  <span class="cm"># Shape: (n_samples, window, 1)</span>
+        y = np.array(y)
+        
+        <span class="cm"># Build and train</span>
+        self._build_model(n_features=<span class="nm">1</span>)
+        
+        early_stop = callbacks.EarlyStopping(
+            patience=<span class="nm">10</span>, restore_best_weights=<span class="kw">True</span>, monitor=<span class="st">'val_loss'</span>
+        )
+        
+        self.model.fit(
+            X, y, epochs=epochs, batch_size=batch_size,
+            validation_split=<span class="nm">0.1</span>, callbacks=[early_stop], verbose=verbose
+        )
+        
+        self.last_window = data_scaled[-self.window:]
+        self.is_fitted = <span class="kw">True</span>
+        print(<span class="st">f"✓ {self.model_type.upper()} model trained successfully!"</span>)
+        <span class="kw">return</span> self
+    
+    <span class="kw">def</span> <span class="fn">predict</span>(self, n_steps=<span class="nm">1</span>):
+        <span class="st">"""
+        Predict n_steps future values using the trained model.
+        Uses rolling (autoregressive) prediction for multi-step.
+        """</span>
+        <span class="kw">if not</span> self.is_fitted:
+            <span class="kw">raise</span> ValueError(<span class="st">"Call .fit() first!"</span>)
+        
+        current_window = self.last_window.copy()
+        predictions_scaled = []
+        
+        <span class="kw">for</span> _ <span class="kw">in</span> range(n_steps):
+            <span class="cm"># Reshape for model: (1 sample, window_size, 1 feature)</span>
+            x_input = current_window.reshape(<span class="nm">1</span>, self.window, <span class="nm">1</span>)
+            pred = self.model.predict(x_input, verbose=<span class="nm">0</span>)[<span class="nm">0</span>][<span class="nm">0</span>]
+            predictions_scaled.append(pred)
+            
+            <span class="cm"># Slide window: drop oldest, add new prediction</span>
+            current_window = np.append(current_window[<span class="nm">1</span>:], [[pred]], axis=<span class="nm">0</span>)
+        
+        <span class="cm"># Inverse transform: convert back to original scale</span>
+        predictions = self.scaler.inverse_transform(
+            np.array(predictions_scaled).reshape(-<span class="nm">1</span>, <span class="nm">1</span>)
+        )
+        <span class="kw">return</span> predictions.flatten()
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# DEMO: Compare LSTM vs GRU on synthetic data
+# ─────────────────────────────────────────────────────────────────</span>
+
+np.random.seed(<span class="nm">42</span>)
+t = np.linspace(<span class="nm">0</span>, <span class="nm">30</span>, <span class="nm">300</span>)
+data = np.sin(t) * <span class="nm">10</span> + <span class="nm">50</span> + np.random.randn(<span class="nm">300</span>) * <span class="nm">0.5</span>
+
+print(<span class="st">"Training LSTM pipeline..."</span>)
+lstm_pipeline = TimeSeriesRNN(model_type=<span class="st">'lstm'</span>, window=<span class="nm">30</span>)
+lstm_pipeline.fit(data, epochs=<span class="nm">30</span>, verbose=<span class="nm">0</span>)
+lstm_preds = lstm_pipeline.predict(n_steps=<span class="nm">20</span>)
+
+print(<span class="st">"Training GRU pipeline..."</span>)
+gru_pipeline = TimeSeriesRNN(model_type=<span class="st">'gru'</span>, window=<span class="nm">30</span>)
+gru_pipeline.fit(data, epochs=<span class="nm">30</span>, verbose=<span class="nm">0</span>)
+gru_preds = gru_pipeline.predict(n_steps=<span class="nm">20</span>)
+
+print(<span class="st">"\n═══════════════════════════════"</span>)
+print(<span class="st">"  20-STEP AHEAD PREDICTIONS"</span>)
+print(<span class="st">"═══════════════════════════════"</span>)
+print(<span class="st">f"LSTM: {[f'{v:.2f}' for v in lstm_preds[:5]]}..."</span>)
+print(<span class="st">f"GRU:  {[f'{v:.2f}' for v in gru_preds[:5]]}..."</span>)</pre>
+    </div>
+  </div>
+
+  <!-- TAB 6: KERAS BUILT-INS -->
+  <div class="tab-content" id="tab-keras">
+    <div class="panel">
+      <div class="panel-title"><span class="icon">💡</span> Wait — Why Did We Write Custom Code First?</div>
+      <p>
+        Great question! The custom NumPy implementation in the "Basic RNN" tab was written <strong>purely for learning</strong>. When you manually code the equations, you truly understand what is happening inside the black box. Now that you understand the mechanics, you should almost always use TensorFlow's built-in layers — they are:
+      </p>
+      <div class="grid-3">
+        <div style="background:var(--code-bg);border:1px solid rgba(0,255,157,0.2);padding:1rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--green);margin-bottom:0.4rem;">FASTER</div>
+          <div style="font-size:0.82rem;color:var(--text2);">Implemented in optimized C++/CUDA under the hood. GPU-accelerated automatically.</div>
+        </div>
+        <div style="background:var(--code-bg);border:1px solid rgba(0,229,255,0.2);padding:1rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--cyan);margin-bottom:0.4rem;">BATTLE-TESTED</div>
+          <div style="font-size:0.82rem;color:var(--text2);">Used in production by thousands of researchers and engineers worldwide.</div>
+        </div>
+        <div style="background:var(--code-bg);border:1px solid rgba(255,184,0,0.2);padding:1rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--amber);margin-bottom:0.4rem;">FEATURE-RICH</div>
+          <div style="font-size:0.82rem;color:var(--text2);">Built-in support for masking, dropout, bidirectionality, mixed precision, and more.</div>
+        </div>
+      </div>
+      <div class="highlight amber" style="margin-top:1rem;">
+        <strong>The Rule:</strong> Learn from scratch → understand the math → use the library. Always.
+      </div>
+    </div>
+
+    <!-- THREE KEY LAYERS -->
+    <div class="panel">
+      <div class="panel-title"><span class="icon">📦</span> The Three TensorFlow / Keras Built-in Recurrent Layers</div>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Layer</th><th>Full Import</th><th>What It Does</th><th>When to Use</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>tf.keras.layers.SimpleRNN</code></td>
+            <td><code>layers.SimpleRNN(units)</code></td>
+            <td>Vanilla RNN — just the basic hₜ = tanh(Wx·xₜ + Wh·hₜ₋₁) equation, no gates</td>
+            <td>Learning / baseline. Rarely used in production due to vanishing gradient.</td>
+          </tr>
+          <tr>
+            <td><code>tf.keras.layers.LSTM</code></td>
+            <td><code>layers.LSTM(units)</code></td>
+            <td>Full LSTM with forget, input, candidate, and output gates. Maintains both hidden state and cell state.</td>
+            <td>Default choice for most sequence tasks. Excellent for long sequences.</td>
+          </tr>
+          <tr>
+            <td><code>tf.keras.layers.GRU</code></td>
+            <td><code>layers.GRU(units)</code></td>
+            <td>GRU with reset and update gates. Single hidden state. Fewer parameters than LSTM.</td>
+            <td>When training speed matters or dataset is smaller. Often matches LSTM performance.</td>
+          </tr>
+          <tr>
+            <td><code>tf.keras.layers.RNN</code></td>
+            <td><code>layers.RNN(cell)</code></td>
+            <td>Base RNN class that wraps any custom cell object. You define the cell logic yourself.</td>
+            <td>When you need a custom recurrent cell with non-standard update logic.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CODE: ALL THREE IN ONE -->
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — Using tf.keras.layers.SimpleRNN, LSTM, and GRU</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow <span class="kw">import</span> keras
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# BUILT-IN KERAS RECURRENT LAYERS
+#
+# All three layers share the same API:
+#   layers.SimpleRNN(units, ...)
+#   layers.LSTM(units, ...)
+#   layers.GRU(units, ...)
+#
+# Key shared parameters:
+#   units            → number of recurrent cells (size of hidden state)
+#   return_sequences → True: output at every timestep
+#                      False: output only at the LAST timestep (default)
+#   return_state     → also return the final hidden (and cell) state
+#   dropout          → fraction of inputs to drop during training
+#   recurrent_dropout→ fraction of recurrent connections to drop
+#   go_backwards     → if True, process the sequence in reverse
+# ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cm"># Dummy input: batch of 32 sequences, each 20 timesteps, 5 features</span>
+BATCH  = <span class="nm">32</span>
+STEPS  = <span class="nm">20</span>   <span class="cm"># timesteps (sequence length)</span>
+FEATS  = <span class="nm">5</span>    <span class="cm"># number of input features per timestep</span>
+dummy_input = np.random.randn(BATCH, STEPS, FEATS).astype(<span class="st">"float32"</span>)
+
+
+<span class="cm"># ══════════════════════════════════════════════════════════════
+# 1. tf.keras.layers.SimpleRNN
+#    The plain vanilla RNN — useful to understand the baseline.
+#    No gates, susceptible to vanishing gradient on long sequences.
+# ══════════════════════════════════════════════════════════════</span>
+
+simple_rnn = layers.SimpleRNN(
+    units=<span class="nm">64</span>,               <span class="cm"># 64 hidden units</span>
+    activation=<span class="st">"tanh"</span>,       <span class="cm"># tanh is the default activation</span>
+    return_sequences=<span class="kw">False</span>,  <span class="cm"># only return output at final timestep</span>
+    return_state=<span class="kw">False</span>,      <span class="cm"># don't return hidden state separately</span>
+    dropout=<span class="nm">0.0</span>,             <span class="cm"># no input dropout (set to e.g. 0.2 to regularize)</span>
+    recurrent_dropout=<span class="nm">0.0</span>   <span class="cm"># no recurrent dropout</span>
+)
+
+output_rnn = simple_rnn(dummy_input)
+<span class="cm"># output shape: (32, 64)  ← (batch_size, units)</span>
+print(<span class="st">f"SimpleRNN output shape: {output_rnn.shape}"</span>)
+
+
+<span class="cm"># ══════════════════════════════════════════════════════════════
+# 2. tf.keras.layers.LSTM
+#    Long Short-Term Memory — the workhorse of sequence modeling.
+#    Has TWO states: hidden state h and cell state C.
+#    return_state=True returns: output, final_h, final_C
+# ══════════════════════════════════════════════════════════════</span>
+
+lstm_layer = layers.LSTM(
+    units=<span class="nm">64</span>,
+    return_sequences=<span class="kw">False</span>,  <span class="cm"># set True if stacking another RNN on top</span>
+    return_state=<span class="kw">True</span>,       <span class="cm"># return (output, hidden_state, cell_state)</span>
+    dropout=<span class="nm">0.2</span>,
+    recurrent_dropout=<span class="nm">0.1</span>
+)
+
+<span class="cm"># When return_state=True, LSTM returns THREE tensors:</span>
+lstm_out, state_h, state_c = lstm_layer(dummy_input)
+
+<span class="cm"># lstm_out  → output (same as state_h when return_sequences=False)</span>
+<span class="cm"># state_h   → final hidden state  hₜ  (short-term memory)</span>
+<span class="cm"># state_c   → final cell state    Cₜ  (long-term memory)</span>
+print(<span class="st">f"LSTM output shape:      {lstm_out.shape}"</span>)   <span class="cm"># (32, 64)</span>
+print(<span class="st">f"LSTM hidden state (h):  {state_h.shape}"</span>)    <span class="cm"># (32, 64)</span>
+print(<span class="st">f"LSTM cell state (C):    {state_c.shape}"</span>)    <span class="cm"># (32, 64)</span>
+
+
+<span class="cm"># ══════════════════════════════════════════════════════════════
+# 3. tf.keras.layers.GRU
+#    Gated Recurrent Unit — lighter than LSTM, often equally good.
+#    Has only ONE state: hidden state h.
+#    return_state=True returns: output, final_h
+# ══════════════════════════════════════════════════════════════</span>
+
+gru_layer = layers.GRU(
+    units=<span class="nm">64</span>,
+    return_sequences=<span class="kw">False</span>,
+    return_state=<span class="kw">True</span>,       <span class="cm"># GRU returns (output, hidden_state) — no cell state</span>
+    dropout=<span class="nm">0.2</span>
+)
+
+gru_out, gru_state_h = gru_layer(dummy_input)
+
+print(<span class="st">f"GRU output shape:       {gru_out.shape}"</span>)      <span class="cm"># (32, 64)</span>
+print(<span class="st">f"GRU hidden state (h):   {gru_state_h.shape}"</span>)  <span class="cm"># (32, 64)</span>
+
+
+<span class="cm"># ══════════════════════════════════════════════════════════════
+# 4. tf.keras.layers.RNN (base class with a custom cell)
+#    Use this when you want to define your OWN recurrent logic
+#    but still benefit from Keras's training infrastructure.
+# ══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">class</span> <span class="cl">MyCustomCell</span>(keras.layers.AbstractRNNCell):
+    <span class="st">"""
+    A custom RNN cell that you define yourself.
+    Keras wraps this with layers.RNN() to handle the sequence loop.
+
+    Two methods you MUST implement:
+      state_size  → size of the hidden state vector
+      call(input, states) → one step forward pass
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, units, **kwargs):
+        super().__init__(**kwargs)
+        self.units = units
+
+    <span class="kw">@property</span>
+    <span class="kw">def</span> <span class="fn">state_size</span>(self):
+        <span class="kw">return</span> self.units  <span class="cm"># one hidden state vector of size `units`</span>
+
+    <span class="kw">def</span> <span class="fn">build</span>(self, input_shape):
+        <span class="cm"># Create weight matrices (called once on first input)</span>
+        self.Wx = self.add_weight(
+            shape=(input_shape[-<span class="nm">1</span>], self.units), initializer=<span class="st">"glorot_uniform"</span>
+        )
+        self.Wh = self.add_weight(
+            shape=(self.units, self.units), initializer=<span class="st">"orthogonal"</span>
+        )
+        self.b  = self.add_weight(shape=(self.units,), initializer=<span class="st">"zeros"</span>)
+        self.built = <span class="kw">True</span>
+
+    <span class="kw">def</span> <span class="fn">call</span>(self, inputs, states):
+        <span class="cm"># states is a list; states[0] is the previous hidden state hₜ₋₁</span>
+        h_prev = states[<span class="nm">0</span>]
+
+        <span class="cm"># Standard RNN equation: hₜ = tanh(Wx·xₜ + Wh·hₜ₋₁ + b)</span>
+        h_new = tf.nn.tanh(inputs @ self.Wx + h_prev @ self.Wh + self.b)
+
+        <span class="cm"># Return (output, [new_states]) — output is usually the new state</span>
+        <span class="kw">return</span> h_new, [h_new]
+
+
+<span class="cm"># Wrap the custom cell with the base RNN layer</span>
+custom_rnn = layers.RNN(
+    MyCustomCell(units=<span class="nm">32</span>),
+    return_sequences=<span class="kw">False</span>
+)
+
+custom_out = custom_rnn(dummy_input)
+print(<span class="st">f"Custom RNN cell output: {custom_out.shape}"</span>)  <span class="cm"># (32, 32)</span></pre>
+    </div>
+
+    <!-- return_sequences EXPLAINED VISUALLY -->
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🔍</span> The Most Confusing Parameter: <code>return_sequences</code> — Explained</div>
+      <p>This single parameter trips up nearly every beginner. Here is exactly what it does:</p>
+
+      <div class="grid-2">
+        <div style="background:var(--code-bg);border:1px solid rgba(255,184,0,0.25);padding:1.25rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--amber);margin-bottom:0.75rem;">return_sequences = False (default)</div>
+          <svg width="100%" height="110" viewBox="0 0 260 110">
+            <rect x="10" y="30" width="40" height="30" fill="#0a1520" stroke="#1a3050" stroke-width="1"/>
+            <text x="30" y="50" text-anchor="middle" fill="#7a9ab5" font-size="8">RNN</text>
+            <rect x="70" y="30" width="40" height="30" fill="#0a1520" stroke="#1a3050" stroke-width="1"/>
+            <text x="90" y="50" text-anchor="middle" fill="#7a9ab5" font-size="8">RNN</text>
+            <rect x="130" y="30" width="40" height="30" fill="#0a1520" stroke="#1a3050" stroke-width="1"/>
+            <text x="150" y="50" text-anchor="middle" fill="#7a9ab5" font-size="8">RNN</text>
+            <rect x="190" y="30" width="40" height="30" fill="#0d1a26" stroke="#00ff9d" stroke-width="2"/>
+            <text x="210" y="50" text-anchor="middle" fill="#00ff9d" font-size="8">RNN</text>
+            <line x1="50" y1="45" x2="70" y2="45" stroke="#1a3050" stroke-width="1.5"/>
+            <line x1="110" y1="45" x2="130" y2="45" stroke="#1a3050" stroke-width="1.5"/>
+            <line x1="170" y1="45" x2="190" y2="45" stroke="#1a3050" stroke-width="1.5"/>
+            <line x1="210" y1="15" x2="210" y2="30" stroke="#00ff9d" stroke-width="2"/>
+            <text x="210" y="10" text-anchor="middle" fill="#00ff9d" font-size="8">y (one output)</text>
+            <text x="30" y="85" text-anchor="middle" fill="#4a6a80" font-size="7">×</text>
+            <text x="90" y="85" text-anchor="middle" fill="#4a6a80" font-size="7">×</text>
+            <text x="150" y="85" text-anchor="middle" fill="#4a6a80" font-size="7">×</text>
+            <text x="210" y="85" text-anchor="middle" fill="#4a6a80" font-size="7">output</text>
+            <text x="130" y="105" text-anchor="middle" fill="#4a6a80" font-size="7">Output shape: (batch, units)</text>
+          </svg>
+          <p style="font-size:0.82rem;color:var(--text2);margin:0.5rem 0 0;">Only the <strong>last timestep's</strong> output is returned. Use this for the final RNN layer when you want a single prediction (classification, regression).</p>
+        </div>
+        <div style="background:var(--code-bg);border:1px solid rgba(0,229,255,0.25);padding:1.25rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--cyan);margin-bottom:0.75rem;">return_sequences = True</div>
+          <svg width="100%" height="110" viewBox="0 0 260 110">
+            <rect x="10" y="30" width="40" height="30" fill="#0d1a26" stroke="#00e5ff" stroke-width="2"/>
+            <text x="30" y="50" text-anchor="middle" fill="#00e5ff" font-size="8">RNN</text>
+            <rect x="70" y="30" width="40" height="30" fill="#0d1a26" stroke="#00e5ff" stroke-width="2"/>
+            <text x="90" y="50" text-anchor="middle" fill="#00e5ff" font-size="8">RNN</text>
+            <rect x="130" y="30" width="40" height="30" fill="#0d1a26" stroke="#00e5ff" stroke-width="2"/>
+            <text x="150" y="50" text-anchor="middle" fill="#00e5ff" font-size="8">RNN</text>
+            <rect x="190" y="30" width="40" height="30" fill="#0d1a26" stroke="#00e5ff" stroke-width="2"/>
+            <text x="210" y="50" text-anchor="middle" fill="#00e5ff" font-size="8">RNN</text>
+            <line x1="50" y1="45" x2="70" y2="45" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="110" y1="45" x2="130" y2="45" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="170" y1="45" x2="190" y2="45" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="30" y1="15" x2="30" y2="30" stroke="#00e5ff" stroke-width="1.5"/>
+            <line x1="90" y1="15" x2="90" y2="30" stroke="#00e5ff" stroke-width="1.5"/>
+            <line x1="150" y1="15" x2="150" y2="30" stroke="#00e5ff" stroke-width="1.5"/>
+            <line x1="210" y1="15" x2="210" y2="30" stroke="#00e5ff" stroke-width="1.5"/>
+            <text x="130" y="10" text-anchor="middle" fill="#00e5ff" font-size="8">y₁  y₂  y₃  y₄  (output at every step)</text>
+            <text x="130" y="105" text-anchor="middle" fill="#4a6a80" font-size="7">Output shape: (batch, timesteps, units)</text>
+          </svg>
+          <p style="font-size:0.82rem;color:var(--text2);margin:0.5rem 0 0;">Output at <strong>every timestep</strong> is returned. Use this when <strong>stacking multiple RNN layers</strong> — each layer needs the full sequence to pass to the next.</p>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-top:1rem;">
+        <strong>Golden Rule:</strong> All RNN layers except the <em>last</em> one must have <code>return_sequences=True</code>. The last RNN layer uses <code>return_sequences=False</code> (unless you need sequence-to-sequence output, like translation).
+      </div>
+    </div>
+
+    <!-- CODE: STACKING LAYERS CORRECTLY -->
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — Correctly Stacking Keras RNN Layers (Common Patterns)</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers, models
+
+<span class="cm"># ──────────────────────────────────────────────────────────────
+# PATTERN 1: Many-to-One (most common for classification/regression)
+# Input:  sequence of shape (batch, timesteps, features)
+# Output: single prediction per sequence
+# ──────────────────────────────────────────────────────────────</span>
+
+many_to_one = models.Sequential([
+    <span class="cm"># Layer 1: LSTM — must use return_sequences=True to feed next LSTM</span>
+    layers.LSTM(<span class="nm">128</span>, return_sequences=<span class="kw">True</span>, input_shape=(<span class="nm">60</span>, <span class="nm">5</span>)),
+    layers.Dropout(<span class="nm">0.2</span>),
+
+    <span class="cm"># Layer 2: LSTM — last recurrent layer, return_sequences=False</span>
+    layers.LSTM(<span class="nm">64</span>, return_sequences=<span class="kw">False</span>),
+    layers.Dropout(<span class="nm">0.2</span>),
+
+    <span class="cm"># Dense output — single value regression (e.g., next day's price)</span>
+    layers.Dense(<span class="nm">1</span>)
+], name=<span class="st">"many_to_one"</span>)
+
+many_to_one.summary()
+
+
+<span class="cm"># ──────────────────────────────────────────────────────────────
+# PATTERN 2: Many-to-Many (sequence-to-sequence, same length)
+# Input:  sequence of T timesteps
+# Output: sequence of T predictions (one per timestep)
+# Use case: part-of-speech tagging, anomaly detection at each step
+# ──────────────────────────────────────────────────────────────</span>
+
+many_to_many = models.Sequential([
+    <span class="cm"># ALL layers use return_sequences=True because we want output at every step</span>
+    layers.LSTM(<span class="nm">64</span>, return_sequences=<span class="kw">True</span>, input_shape=(<span class="nm">60</span>, <span class="nm">5</span>)),
+    layers.GRU(<span class="nm">32</span>,  return_sequences=<span class="kw">True</span>),
+
+    <span class="cm"># TimeDistributed applies a Dense layer to every timestep independently</span>
+    layers.TimeDistributed(layers.Dense(<span class="nm">1</span>))
+    <span class="cm"># Output shape: (batch, 60, 1) — one prediction per timestep</span>
+], name=<span class="st">"many_to_many"</span>)
+
+
+<span class="cm"># ──────────────────────────────────────────────────────────────
+# PATTERN 3: Bidirectional LSTM
+# Reads the sequence both FORWARD and BACKWARD, then concatenates.
+# Useful when you have access to the full sequence at once
+# (not suitable for real-time/streaming predictions).
+# ──────────────────────────────────────────────────────────────</span>
+
+bidirectional = models.Sequential([
+    <span class="cm"># layers.Bidirectional wraps any RNN layer
+    # It runs two copies: one forward (left→right), one backward (right→left)
+    # Outputs are concatenated: if LSTM has 64 units, output is 128</span>
+    layers.Bidirectional(
+        layers.LSTM(<span class="nm">64</span>, return_sequences=<span class="kw">True</span>),
+        input_shape=(<span class="nm">60</span>, <span class="nm">5</span>)
+    ),
+    layers.Bidirectional(
+        layers.LSTM(<span class="nm">32</span>, return_sequences=<span class="kw">False</span>)
+    ),
+    layers.Dense(<span class="nm">1</span>)
+], name=<span class="st">"bidirectional"</span>)
+
+
+<span class="cm"># ──────────────────────────────────────────────────────────────
+# PATTERN 4: Functional API (for complex architectures)
+# The Sequential API (above) only allows a linear stack of layers.
+# For architectures with branches, skip connections, or multiple
+# inputs/outputs, use the Functional API instead.
+# ──────────────────────────────────────────────────────────────</span>
+
+inputs = keras.Input(shape=(<span class="nm">60</span>, <span class="nm">5</span>), name=<span class="st">"sequence_input"</span>)
+
+<span class="cm"># Two parallel paths — one LSTM, one GRU — then merge</span>
+x_lstm = layers.LSTM(<span class="nm">64</span>, return_sequences=<span class="kw">False</span>, name=<span class="st">"lstm_path"</span>)(inputs)
+x_gru  = layers.GRU(<span class="nm">64</span>,  return_sequences=<span class="kw">False</span>, name=<span class="st">"gru_path"</span>)(inputs)
+
+<span class="cm"># Concatenate both paths</span>
+merged = layers.concatenate([x_lstm, x_gru], name=<span class="st">"merge"</span>)
+
+<span class="cm"># Shared dense layers after the merge</span>
+x = layers.Dense(<span class="nm">32</span>, activation=<span class="st">"relu"</span>, name=<span class="st">"dense1"</span>)(merged)
+x = layers.Dropout(<span class="nm">0.2</span>)(x)
+output = layers.Dense(<span class="nm">1</span>, name=<span class="st">"output"</span>)(x)
+
+<span class="cm"># Build the model from inputs to outputs</span>
+parallel_model = keras.Model(inputs=inputs, outputs=output, name=<span class="st">"lstm_gru_parallel"</span>)
+parallel_model.summary()
+
+<span class="cm"># Compile — same as always</span>
+parallel_model.compile(optimizer=<span class="st">"adam"</span>, loss=<span class="st">"mse"</span>)
+
+
+<span class="cm"># ──────────────────────────────────────────────────────────────
+# PATTERN 5: Stateful RNN
+# By default, Keras resets the hidden state at the start of each batch.
+# With stateful=True, the state is carried over between batches.
+# Use this when your sequence is too long to fit in one batch
+# (e.g., a continuous stream of sensor data or audio).
+# ──────────────────────────────────────────────────────────────</span>
+
+<span class="cm"># For stateful RNNs, batch_size must be fixed and specified upfront</span>
+FIXED_BATCH = <span class="nm">1</span>
+stateful_model = models.Sequential([
+    layers.LSTM(
+        units=<span class="nm">64</span>,
+        stateful=<span class="kw">True</span>,                              <span class="cm"># carry state between batches</span>
+        batch_input_shape=(FIXED_BATCH, <span class="nm">50</span>, <span class="nm">1</span>),  <span class="cm"># batch_size MUST be fixed</span>
+        return_sequences=<span class="kw">False</span>
+    ),
+    layers.Dense(<span class="nm">1</span>)
+])
+
+<span class="cm"># You must manually reset state between independent sequences</span>
+<span class="cm"># stateful_model.reset_states()  ← call this between unrelated sequences</span>
+
+print(<span class="st">"\n✓ All patterns built successfully!"</span>)
+print(<span class="st">"\nSummary of when to use each:"</span>)
+print(<span class="st">"  Many-to-One:    Stock prediction, sentiment analysis"</span>)
+print(<span class="st">"  Many-to-Many:   Anomaly detection, seq-to-seq tagging"</span>)
+print(<span class="st">"  Bidirectional:  Text classification (full text available)"</span>)
+print(<span class="st">"  Functional API: Complex multi-input/output architectures"</span>)
+print(<span class="st">"  Stateful:       Streaming data, very long continuous sequences"</span>)</pre>
+    </div>
+
+    <!-- return_state USE CASE -->
+    <div class="panel">
+      <div class="panel-title"><span class="icon">🔗</span> When and Why to Use <code>return_state=True</code></div>
+      <p>
+        Most of the time you don't need <code>return_state=True</code>. You need it in advanced architectures where you want to <strong>manually pass a state from one model into another</strong>. The most famous example is the <strong>Encoder-Decoder architecture</strong> used in machine translation.
+      </p>
+      <div class="highlight">
+        <strong>Encoder-Decoder pattern:</strong> An encoder RNN reads the input sequence and produces a final state. That state is then used as the <em>initial state</em> of a decoder RNN that generates the output sequence. Without <code>return_state=True</code>, you cannot extract that final state to pass it across.
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Python — return_state in an Encoder-Decoder Architecture</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+      <pre><span class="im">import</span> tensorflow <span class="kw">as</span> tf
+<span class="im">from</span> tensorflow <span class="kw">import</span> keras
+<span class="im">from</span> tensorflow.keras <span class="kw">import</span> layers
+<span class="im">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────
+# ENCODER-DECODER with return_state
+#
+# Task example: translate a sequence into another sequence
+#   Encoder reads input  → produces a "context" (the final state)
+#   Decoder starts from that context → generates the output
+# ─────────────────────────────────────────────────────────────────</span>
+
+LATENT_DIM  = <span class="nm">64</span>   <span class="cm"># size of the shared hidden state</span>
+ENC_STEPS   = <span class="nm">20</span>   <span class="cm"># encoder input length</span>
+DEC_STEPS   = <span class="nm">15</span>   <span class="cm"># decoder output length</span>
+FEATS       = <span class="nm">8</span>
+
+<span class="cm"># ── ENCODER ─────────────────────────────────────────────────────</span>
+
+encoder_inputs = keras.Input(shape=(ENC_STEPS, FEATS), name=<span class="st">"encoder_input"</span>)
+
+<span class="cm"># return_state=True → returns (output, final_h, final_c)
+# We only care about the states here, not the per-step output</span>
+encoder_lstm = layers.LSTM(LATENT_DIM, return_state=<span class="kw">True</span>, name=<span class="st">"encoder_lstm"</span>)
+_, enc_h, enc_c = encoder_lstm(encoder_inputs)
+<span class="cm"># enc_h → final hidden state  (encodes meaning of the full input)</span>
+<span class="cm"># enc_c → final cell state    (long-term memory from the input)</span>
+
+encoder_states = [enc_h, enc_c]   <span class="cm"># package both states together</span>
+
+
+<span class="cm"># ── DECODER ─────────────────────────────────────────────────────</span>
+
+decoder_inputs = keras.Input(shape=(DEC_STEPS, FEATS), name=<span class="st">"decoder_input"</span>)
+
+decoder_lstm = layers.LSTM(
+    LATENT_DIM,
+    return_sequences=<span class="kw">True</span>,  <span class="cm"># we need output at every decoder step</span>
+    return_state=<span class="kw">True</span>,
+    name=<span class="st">"decoder_lstm"</span>
+)
+
+<span class="cm"># Pass encoder_states as the INITIAL STATE of the decoder
+# This is how the decoder "knows" what the encoder read</span>
+decoder_outputs, _, _ = decoder_lstm(
+    decoder_inputs,
+    initial_state=encoder_states   <span class="cm"># ← the key line!</span>
+)
+
+<span class="cm"># Dense layer applied to every decoder timestep</span>
+decoder_dense = layers.TimeDistributed(
+    layers.Dense(<span class="nm">1</span>), name=<span class="st">"output_projection"</span>
+)
+final_output = decoder_dense(decoder_outputs)
+
+<span class="cm"># Build full encoder-decoder model</span>
+seq2seq = keras.Model(
+    inputs=[encoder_inputs, decoder_inputs],
+    outputs=final_output,
+    name=<span class="st">"encoder_decoder"</span>
+)
+
+seq2seq.compile(optimizer=<span class="st">"adam"</span>, loss=<span class="st">"mse"</span>)
+seq2seq.summary()
+
+<span class="cm"># Quick test with dummy data</span>
+enc_data = np.random.randn(<span class="nm">16</span>, ENC_STEPS, FEATS)
+dec_data = np.random.randn(<span class="nm">16</span>, DEC_STEPS, FEATS)
+targets  = np.random.randn(<span class="nm">16</span>, DEC_STEPS, <span class="nm">1</span>)
+
+output = seq2seq([enc_data, dec_data])
+print(<span class="st">f"\nEncoder input shape:  {enc_data.shape}"</span>)
+print(<span class="st">f"Decoder input shape:  {dec_data.shape}"</span>)
+print(<span class="st">f"Final output shape:   {output.shape}"</span>)   <span class="cm"># (16, 15, 1)</span>
+print(<span class="st">"\n✓ Encoder-Decoder built! The encoder's final state"</span>)
+print(<span class="st">"  was passed as the decoder's initial state via return_state."</span>)</pre>
+    </div>
+
+    <!-- QUICK REFERENCE CHEAT SHEET -->
+    <div class="panel">
+      <div class="panel-title"><span class="icon">📋</span> Keras RNN Cheat Sheet — Quick Reference</div>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Goal</th><th>Code</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic LSTM, single output</td>
+            <td><code>layers.LSTM(64)</code></td>
+          </tr>
+          <tr>
+            <td>Stack two LSTMs</td>
+            <td><code>layers.LSTM(64, return_sequences=True)</code> then <code>layers.LSTM(32)</code></td>
+          </tr>
+          <tr>
+            <td>Output at every timestep</td>
+            <td><code>layers.LSTM(64, return_sequences=True)</code></td>
+          </tr>
+          <tr>
+            <td>Get final hidden + cell states</td>
+            <td><code>out, h, c = layers.LSTM(64, return_state=True)(x)</code></td>
+          </tr>
+          <tr>
+            <td>Bidirectional reading</td>
+            <td><code>layers.Bidirectional(layers.LSTM(64))</code></td>
+          </tr>
+          <tr>
+            <td>Add dropout inside RNN</td>
+            <td><code>layers.LSTM(64, dropout=0.2, recurrent_dropout=0.1)</code></td>
+          </tr>
+          <tr>
+            <td>Custom recurrent cell</td>
+            <td><code>layers.RNN(MyCustomCell(32))</code></td>
+          </tr>
+          <tr>
+            <td>Carry state across batches</td>
+            <td><code>layers.LSTM(64, stateful=True, batch_input_shape=(B, T, F))</code></td>
+          </tr>
+          <tr>
+            <td>Dense applied to every step</td>
+            <td><code>layers.TimeDistributed(layers.Dense(1))</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMMON MISTAKES -->
+  <div class="panel" style="margin-top:2rem;">
+    <div class="panel-title"><span class="icon">🚨</span> Common Mistakes and How to Avoid Them</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Random train/test split on time series</td>
+          <td>Future data leaks into training — the model "cheats"</td>
+          <td>Always split chronologically: train on early data, test on later data</td>
+        </tr>
+        <tr>
+          <td>Fitting the scaler on all data</td>
+          <td>The scaler "sees" future values during normalization</td>
+          <td>Fit scaler on training set only; transform test set with same scaler</td>
+        </tr>
+        <tr>
+          <td>Forgetting to reshape for RNN input</td>
+          <td>Keras LSTM requires 3D input: (samples, timesteps, features)</td>
+          <td>Use <code>X.reshape(X.shape[0], window, n_features)</code></td>
+        </tr>
+        <tr>
+          <td>Using <code>return_sequences=False</code> between LSTM layers</td>
+          <td>The second LSTM layer receives only one vector, not a sequence</td>
+          <td>Set <code>return_sequences=True</code> for all but the last RNN layer</td>
+        </tr>
+        <tr>
+          <td>Not inverse transforming predictions</td>
+          <td>Results are in [0,1] scale, meaningless to end users</td>
+          <td>Always call <code>scaler.inverse_transform()</code> on predictions</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
+
+<!-- SUMMARY STATS -->
+<div class="summary-grid section visible">
+  <div class="summary-cell">
+    <span class="summary-stat">3</span>
+    <span class="summary-stat-label">Architectures Covered</span>
+  </div>
+  <div class="summary-cell">
+    <span class="summary-stat">4</span>
+    <span class="summary-stat-label">LSTM Gates</span>
+  </div>
+  <div class="summary-cell">
+    <span class="summary-stat">2</span>
+    <span class="summary-stat-label">GRU Gates</span>
+  </div>
+  <div class="summary-cell">
+    <span class="summary-stat">10</span>
+    <span class="summary-stat-label">Candlestick Features</span>
+  </div>
+  <div class="summary-cell">
+    <span class="summary-stat">60</span>
+    <span class="summary-stat-label">Day Lookback Window</span>
+  </div>
+  <div class="summary-cell">
+    <span class="summary-stat">∞</span>
+    <span class="summary-stat-label">Sequence Length Limit</span>
+  </div>
+</div>
+
+<!-- FINAL QUIZ -->
+<section class="section" id="review">
+  <div class="section-header">
+    <span class="section-num">07 // REVIEW</span>
+    <h2 class="section-title">Test Your Understanding</h2>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">🧠 In an LSTM network, what is the purpose of the Cell State (Cₜ)?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="checkQuiz2(this, false)">A. It is the output of the network at each time step</button>
+      <button class="quiz-opt" onclick="checkQuiz2(this, true)">B. It acts as long-term memory that can carry information across many time steps</button>
+      <button class="quiz-opt" onclick="checkQuiz2(this, false)">C. It stores the input data before processing</button>
+      <button class="quiz-opt" onclick="checkQuiz2(this, false)">D. It is the learning rate of the network</button>
+    </div>
+    <div class="quiz-feedback" id="quiz-fb2">✓ Correct! The Cell State is the "long-term memory highway" of the LSTM. It runs through the network with only minor linear interactions (forget + add), allowing gradients and information to flow over many time steps. This is why LSTM solves the vanishing gradient problem that plagued vanilla RNNs.</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">🧠 When creating sequences for a time series model, why must we split the data chronologically (not randomly)?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="checkQuiz3(this, false)">A. Random splits are computationally expensive</button>
+      <button class="quiz-opt" onclick="checkQuiz3(this, false)">B. Keras requires chronological data</button>
+      <button class="quiz-opt" onclick="checkQuiz3(this, true)">C. A random split would let future data appear in training, allowing the model to "cheat" by already knowing what it's supposed to predict</button>
+      <button class="quiz-opt" onclick="checkQuiz3(this, false)">D. Chronological splits improve training speed</button>
+    </div>
+    <div class="quiz-feedback" id="quiz-fb3">✓ Exactly! This is called "data leakage." If we split randomly, the training set might include a window ending on day 200 with a target from day 201 — but the test set might include a sequence starting on day 190. The model would have already "seen" the future during training. Chronological splitting ensures the model is always predicting truly unseen future data.</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">🧠 A GRU uses only 2 gates while LSTM uses 4. What is the main practical advantage of GRU?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="checkQuiz4(this, false)">A. GRU always achieves higher accuracy than LSTM</button>
+      <button class="quiz-opt" onclick="checkQuiz4(this, true)">B. Fewer parameters means faster training and less risk of overfitting on smaller datasets</button>
+      <button class="quiz-opt" onclick="checkQuiz4(this, false)">C. GRU can handle sequences of any length without any vanishing gradient issues</button>
+      <button class="quiz-opt" onclick="checkQuiz4(this, false)">D. GRU is more interpretable than LSTM</button>
+    </div>
+    <div class="quiz-feedback" id="quiz-fb4">✓ Right! GRU's main advantage is efficiency. With ~25% fewer parameters than an equivalent LSTM, it trains faster and generalizes better on smaller datasets. In practice, GRU often performs similarly to LSTM on medium-length sequences. The choice between them is mostly a hyperparameter tuning decision — try both and pick the one that performs better on your validation set.</div>
+  </div>
+
+</section>
+
+</div> <!-- end .content -->
+
+<!-- FOOTER -->
+<footer style="position:relative;z-index:1;border-top:1px solid var(--border2);padding:2rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);letter-spacing:0.08em;">
+  <div style="margin-bottom:0.5rem;">RECURRENT NEURAL NETWORKS // DEEP LEARNING MODULE 04</div>
+  <div>LSTM · GRU · TIME SERIES FORECASTING · SEQUENCE MODELING</div>
+  <div style="margin-top:0.75rem;color:var(--border);">⚠️ All code and models are for educational purposes. Not financial advice.</div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════════════════════════════
+(function() {
+  const container = document.getElementById('particles');
+  const colors = ['#00e5ff','#00ff9d','#b06cff','#ffb800'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (Math.random() * 20 + 15) + 's';
+    p.style.animationDelay = (Math.random() * 20) + 's';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width = p.style.height = (Math.random() * 2 + 1) + 'px';
+    container.appendChild(p);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// HERO CANVAS — Neural network animation
+// ═══════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [], particles = [];
+  
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    initNodes();
+  }
+  
+  function initNodes() {
+    nodes = [];
+    const layers = [4, 6, 6, 4];
+    const spacingX = W / (layers.length + 1);
+    layers.forEach((count, li) => {
+      const spacingY = H / (count + 1);
+      for (let ni = 0; ni < count; ni++) {
+        nodes.push({
+          x: spacingX * (li + 1),
+          y: spacingY * (ni + 1),
+          layer: li,
+          index: ni,
+          pulse: Math.random() * Math.PI * 2
+        });
+      }
+    });
+  }
+  
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    
+    // Draw connections
+    nodes.forEach(n1 => {
+      nodes.forEach(n2 => {
+        if (n2.layer === n1.layer + 1) {
+          const alpha = 0.04 + 0.02 * Math.sin(Date.now() * 0.001 + n1.pulse);
+          ctx.strokeStyle = `rgba(0,229,255,${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(n1.x, n1.y);
+          ctx.lineTo(n2.x, n2.y);
+          ctx.stroke();
+        }
+      });
+      // Recurrent self-loop for middle layers
+      if (n1.layer === 1 || n1.layer === 2) {
+        const alpha = 0.05 + 0.03 * Math.sin(Date.now() * 0.002 + n1.pulse * 2);
+        ctx.strokeStyle = `rgba(176,108,255,${alpha})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(n1.x, n1.y - 15, 12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    });
+    
+    // Draw nodes
+    nodes.forEach(n => {
+      const glow = 0.3 + 0.2 * Math.sin(Date.now() * 0.002 + n.pulse);
+      const r = 4 + glow * 2;
+      const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 2);
+      grad.addColorStop(0, `rgba(0,229,255,${glow * 0.8})`);
+      grad.addColorStop(1, 'rgba(0,229,255,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r * 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(0,229,255,${glow})`;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    requestAnimationFrame(draw);
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// SCROLL ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+  document.getElementById('progress-bar').style.width = (scrolled * 100) + '%';
+  
+  // Scrollspy
+  document.querySelectorAll('.section').forEach(s => {
+    const rect = s.getBoundingClientRect();
+    if (rect.top <= 100 && rect.bottom > 100) {
+      const id = s.id;
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// RNN UNROLL DIAGRAM
+// ═══════════════════════════════════════════════════════════════════
+(function() {
+  const container = document.getElementById('rnn-unroll');
+  const words = ['The', 'cat', 'sat', 'on', 'mat'];
+  const outputs = ['—', '—', '—', '—', 'happy😊'];
+  
+  words.forEach((w, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'rnn-cell';
+    cell.innerHTML = `
+      <div class="rnn-input">x${i+1}="${w}"</div>
+      <div class="rnn-box ${i===4?'active':''}" id="rnn-cell-${i}">RNN<br>Cell</div>
+      <div class="rnn-label">h${i+1}</div>
+      <div class="rnn-output">${outputs[i]}</div>
+    `;
+    container.appendChild(cell);
+    if (i < words.length - 1) {
+      const arrow = document.createElement('div');
+      arrow.className = 'rnn-arrow';
+      arrow.innerHTML = '<div class="arrow-line"></div>';
+      container.appendChild(arrow);
+    }
+  });
+  
+  // Animate active cell cycling
+  let current = 0;
+  setInterval(() => {
+    document.querySelectorAll('[id^="rnn-cell-"]').forEach((el, i) => {
+      el.classList.toggle('active', i === current);
+    });
+    current = (current + 1) % words.length;
+  }, 1200);
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// SEQUENCE DEMO
+// ═══════════════════════════════════════════════════════════════════
+const seqWords = ['Alice', 'is', 'a', 'brilliant', 'doctor', '.', 'She', 'loves', 'her', 'work'];
+const memValues1 = [0.15, 0.18, 0.22, 0.35, 0.55, 0.52, 0.80, 0.75, 0.70, 0.68];
+const memValues2 = [0.05, 0.12, 0.15, 0.25, 0.38, 0.36, 0.72, 0.85, 0.90, 0.88];
+let seqStep = 0;
+
+function initSeq() {
+  const track = document.getElementById('seq-track');
+  track.innerHTML = '';
+  seqWords.forEach((w, i) => {
+    const t = document.createElement('div');
+    t.className = 'seq-token';
+    t.textContent = w;
+    t.id = 'stok-' + i;
+    track.appendChild(t);
+  });
+  seqStep = 0;
+  setBar(0, 0, 0, 0);
+}
+
+function setBar(b1w, b1v, b2w, b2v) {
+  document.getElementById('mem-bar1').style.width = b1w + '%';
+  document.getElementById('mem-val1').textContent = b1v.toFixed(2);
+  document.getElementById('mem-bar2').style.width = b2w + '%';
+  document.getElementById('mem-val2').textContent = b2v.toFixed(2);
+}
+
+function stepSequence() {
+  if (seqStep >= seqWords.length) return;
+  const tok = document.getElementById('stok-' + seqStep);
+  tok.classList.remove('current');
+  tok.classList.add('processed');
+  if (seqStep + 1 < seqWords.length) {
+    document.getElementById('stok-' + (seqStep + 1)).classList.add('current');
+  }
+  const v1 = memValues1[seqStep] * 100;
+  const v2 = memValues2[seqStep] * 100;
+  setBar(v1, memValues1[seqStep], v2, memValues2[seqStep]);
+  seqStep++;
+}
+
+function resetSequence() { initSeq(); }
+initSeq();
+
+// ═══════════════════════════════════════════════════════════════════
+// RNN NUMERICAL STEPS ANIMATION
+// ═══════════════════════════════════════════════════════════════════
+let rnnStepIdx = 0;
+const rnnStepIds = ['rs1','rs2','rs3','rs4'];
+
+function animateRNNSteps() {
+  if (rnnStepIdx >= rnnStepIds.length) return;
+  document.getElementById(rnnStepIds[rnnStepIdx]).classList.add('show');
+  rnnStepIdx++;
+  if (rnnStepIdx < rnnStepIds.length) setTimeout(animateRNNSteps, 700);
+}
+
+function resetRNNSteps() {
+  rnnStepIds.forEach(id => document.getElementById(id).classList.remove('show'));
+  rnnStepIdx = 0;
+}
+
+// LSTM steps
+let lstmStepIdx = 0;
+const lstmStepIds = ['ls1','ls2','ls3','ls4','ls5'];
+
+function animateLSTMSteps() {
+  if (lstmStepIdx >= lstmStepIds.length) return;
+  document.getElementById(lstmStepIds[lstmStepIdx]).classList.add('show');
+  lstmStepIdx++;
+  if (lstmStepIdx < lstmStepIds.length) setTimeout(animateLSTMSteps, 700);
+}
+
+function resetLSTMSteps() {
+  lstmStepIds.forEach(id => document.getElementById(id).classList.remove('show'));
+  lstmStepIdx = 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════════════════════════
+function checkQuiz(btn, correct) {
+  const parent = btn.closest('.quiz-card');
+  parent.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) parent.querySelectorAll('.quiz-opt')[1].classList.add('correct');
+  parent.querySelector('#quiz-fb1').style.display = 'block';
+}
+
+function checkQuiz2(btn, correct) {
+  const parent = btn.closest('.quiz-card');
+  parent.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    parent.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.textContent.startsWith('B.')) b.classList.add('correct');
+    });
+  }
+  parent.querySelector('#quiz-fb2').style.display = 'block';
+}
+
+function checkQuiz3(btn, correct) {
+  const parent = btn.closest('.quiz-card');
+  parent.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    parent.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.textContent.startsWith('C.')) b.classList.add('correct');
+    });
+  }
+  parent.querySelector('#quiz-fb3').style.display = 'block';
+}
+
+function checkQuiz4(btn, correct) {
+  const parent = btn.closest('.quiz-card');
+  parent.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    parent.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.textContent.startsWith('B.')) b.classList.add('correct');
+    });
+  }
+  parent.querySelector('#quiz-fb4').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COPY CODE
+// ═══════════════════════════════════════════════════════════════════
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STOCK CANDLESTICK DEMO
+// ═══════════════════════════════════════════════════════════════════
+function generateCandleData(trend) {
+  const data = [];
+  let price = 100;
+  for (let i = 0; i < 40; i++) {
+    const drift = trend === 'bullish' ? 0.8 : trend === 'bearish' ? -0.8 : (Math.random() - 0.5) * 0.5;
+    const open = price;
+    const change = drift + (Math.random() - 0.5) * 3;
+    const close = open + change;
+    const high = Math.max(open, close) + Math.random() * 1.5;
+    const low = Math.min(open, close) - Math.random() * 1.5;
+    data.push({ open, close, high, low });
+    price = close;
+  }
+  return data;
+}
+
+function drawCandleChart(data) {
+  const canvas = document.getElementById('candleChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  
+  const prices = data.flatMap(d => [d.high, d.low]);
+  const minP = Math.min(...prices) - 1;
+  const maxP = Math.max(...prices) + 1;
+  const range = maxP - minP;
+  const toY = p => H - ((p - minP) / range) * (H - 20) - 10;
+  
+  const candleW = Math.max(6, (W / data.length) * 0.6);
+  const spacing = W / data.length;
+  
+  ctx.strokeStyle = 'rgba(0,229,255,0.1)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < 5; i++) {
+    const y = 10 + (H - 20) * i / 4;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  
+  data.forEach((d, i) => {
+    const x = spacing * i + spacing / 2;
+    const bull = d.close >= d.open;
+    const color = bull ? '#00ff9d' : '#ff4d4d';
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, toY(d.high));
+    ctx.lineTo(x, toY(d.low));
+    ctx.stroke();
+    
+    const bodyTop = toY(Math.max(d.open, d.close));
+    const bodyH = Math.max(1, Math.abs(toY(d.open) - toY(d.close)));
+    ctx.fillStyle = bull ? 'rgba(0,255,157,0.8)' : 'rgba(255,77,77,0.8)';
+    ctx.fillRect(x - candleW/2, bodyTop, candleW, bodyH);
+  });
+}
+
+let currentData = null;
+
+function analyzePattern(data) {
+  const last = data.slice(-20);
+  const bullCount = last.filter(d => d.close > d.open).length;
+  const avgReturn = (data[data.length-1].close - data[0].close) / data[0].close;
+  const volatility = Math.std ? Math.std(last.map(d => d.close - d.open)) : 
+    Math.sqrt(last.reduce((s,d) => s + Math.pow((d.close-d.open) - last.reduce((a,x)=>a+(x.close-x.open),0)/last.length,2),0)/last.length);
+  return { bullCount, avgReturn, volatility };
+}
+
+function generateBullish() {
+  currentData = generateCandleData('bullish');
+  drawCandleChart(currentData);
+  showSignal(currentData, 'bullish');
+}
+
+function generateBearish() {
+  currentData = generateCandleData('bearish');
+  drawCandleChart(currentData);
+  showSignal(currentData, 'bearish');
+}
+
+function generateMixed() {
+  currentData = generateCandleData('mixed');
+  drawCandleChart(currentData);
+  showSignal(currentData, 'mixed');
+}
+
+function showSignal(data, trend) {
+  const result = document.getElementById('stock-result');
+  result.style.display = 'grid';
+  
+  const last = data.slice(-20);
+  const bullCount = last.filter(d => d.close > d.open).length;
+  const totalReturn = (data[data.length-1].close - data[0].close) / data[0].close * 100;
+  
+  let bullConf, bearConf, risk, signal, signalClass, advice;
+  
+  if (trend === 'bullish') {
+    bullConf = 0.65 + Math.random() * 0.25;
+    bearConf = 1 - bullConf;
+    risk = 0.2 + Math.random() * 0.3;
+    signal = 'BUY 🟢';
+    signalClass = 'signal-buy';
+    advice = `<strong style="color:var(--green)">INVESTMENT SIGNAL: BUY</strong><br><br>The LSTM model detected a <strong>bullish candlestick pattern</strong>. ${bullCount}/20 recent candles are green (bullish). Total trend: <strong>+${totalReturn.toFixed(1)}%</strong>. The model recommends <strong>entering a position</strong>, targeting 5-10% upside in the next ${Math.floor(Math.random()*5+5)} trading days. Suggested stop-loss: 2% below current price.`;
+  } else if (trend === 'bearish') {
+    bearConf = 0.65 + Math.random() * 0.25;
+    bullConf = 1 - bearConf;
+    risk = 0.4 + Math.random() * 0.4;
+    signal = 'SELL 🔴';
+    signalClass = 'signal-sell';
+    advice = `<strong style="color:#ff6b6b">INVESTMENT SIGNAL: SELL / AVOID</strong><br><br>The LSTM model detected a <strong>bearish candlestick pattern</strong>. Only ${bullCount}/20 recent candles are green. Total trend: <strong>${totalReturn.toFixed(1)}%</strong>. The model recommends <strong>avoiding this fund</strong> or exiting existing positions. Wait for bullish reversal confirmation before re-entering.`;
+  } else {
+    bullConf = 0.4 + Math.random() * 0.2;
+    bearConf = 1 - bullConf;
+    risk = 0.5 + Math.random() * 0.3;
+    signal = 'HOLD ⚪';
+    signalClass = 'signal-hold';
+    advice = `<strong style="color:var(--amber)">INVESTMENT SIGNAL: HOLD</strong><br><br>The LSTM model detected a <strong>mixed/sideways pattern</strong>. ${bullCount}/20 recent candles are green — no clear directional bias. Total trend: <strong>${totalReturn.toFixed(1)}%</strong>. The model cannot identify a clear edge. Recommendation: <strong>wait for a cleaner signal</strong>. Check back after next earnings or macro event.`;
+  }
+  
+  const box = document.getElementById('signal-box');
+  box.className = 'signal-box ' + signalClass;
+  document.getElementById('signal-label').textContent = signal;
+  document.getElementById('signal-sub').textContent = `LSTM Confidence: ${(Math.max(bullConf,bearConf)*100).toFixed(0)}%`;
+  
+  document.getElementById('conf-bull').style.width = (bullConf * 100) + '%';
+  document.getElementById('conf-bull-val').textContent = (bullConf * 100).toFixed(0) + '%';
+  document.getElementById('conf-bear').style.width = (bearConf * 100) + '%';
+  document.getElementById('conf-bear-val').textContent = (bearConf * 100).toFixed(0) + '%';
+  document.getElementById('conf-risk').style.width = (risk * 100) + '%';
+  document.getElementById('conf-risk-val').textContent = (risk * 100).toFixed(0) + '%';
+  
+  document.getElementById('invest-advice').innerHTML = advice + `<br><br><span style="font-size:0.78rem;color:var(--text3)">⚠️ This is a simulated demonstration for educational purposes only. Do not make real financial decisions based on this.</span>`;
+}
+
+// Initialize with random chart on load
+window.addEventListener('load', () => {
+  generateMixed();
+});
+</script>
+</body>
+</html>
